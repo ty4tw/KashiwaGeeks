@@ -1,34 +1,32 @@
- /*
- *                 MIT License
- *      Copyright (c) 2017 Tomoaki Yamaguchi
- *
- *   This software is released under the MIT License.
- *   http://opensource.org/licenses/mit-license.php
- *
- *   Created on: 2017/11/25
- *       Author: tomoaki@tomy-tech.com
- *
- */
+
 #include <KashiwaGeeks.h>
+
+#define ECHO true
 
 ADB922S LoRa;
 
 //================================
 //          Initialize Device Function
 //================================
-#define BPS_9600           9600
-#define BPS_19200       19200
-#define BPS_57600       57600
+#define BPS_9600       9600
+#define BPS_19200     19200
+#define BPS_57600     57600
 #define BPS_115200   115200
 
 void start()
 {
     /*  Setup console */
-    Serial.begin(BPS_57600);
+    ConsoleBegin(BPS_57600);
     //DisableConsole();
     //DisableDebug();
 
-    ConsolePrint(F("**** Start*****\n"));
+    /*
+     * Enable Interrupt 0 & 1  Uncomment the following two  lines.
+     */
+    //pinMode(2, INPUT_PULLUP);
+    //pinMode(3, INPUT_PULLUP); // For ADB922S, CUT the pin3 of the Sheild.
+
+    ConsolePrint(F("**** Downlink_Sample *****\n"));
 
     /*  setup Power save Devices */
     //power_adc_disable();          // ADC converter
@@ -38,7 +36,7 @@ void start()
     //power_twi_disable();           // I2C
 
     /*  setup ADB922S  */
-    if ( LoRa.begin(BPS_9600) == false )
+    if ( LoRa.begin(BPS_19200) == false )
     {
         while(true)
         {
@@ -49,15 +47,11 @@ void start()
         }
     }
 
+    /* set minimum DR. to expand the payload's size. */
+    LoRa.setDr(DR3);  // DR0 to DR5
+
     /*  join LoRaWAN */
-    LoRa.reconnect();
-
-
-    /*  for BME280 initialize  */
-     //bme.begin();
-
-    /*  seetup WDT interval to 1, 2, 4 or 8 seconds  */
-    //setWDT(8);    // set to 8 seconds
+    LoRa.join();
 }
 
 //================================
@@ -102,13 +96,13 @@ void int1D3(void)
 void port14(void)
 {
   ConsolePrint("%s\n", LoRa.getDownLinkData().c_str());
-  LedOn();
 }
 
 void port15(void)
 {
-  ConsolePrint("%s\n", LoRa.getDownLinkData().c_str());
-  LedOff();
+    Payload* pl = LoRa.getDownLinkPayload();
+    uint16_t dld = pl->get_uint16();
+    ConsolePrint(F("DL=%d\n"), dld);
 }
 
 PORT_LIST = { 
@@ -120,55 +114,51 @@ PORT_LIST = {
 //================================
 //    Functions to be executed periodically
 //================================
+#define LoRa_Port_NORM  12
+#define LoRa_Port_COMP  13
 
-#define LoRa_fPort_TEMP  12        // port 12 = 温度湿度気圧等
-
-float bme_temp = 0;
-float bme_humi = 0;
-float bme_press = 0;
-
-short port = LoRa_fPort_TEMP;    // port 12 = Temp
-
-int temp = bme_temp * 100;
-unsigned int humi = bme_humi * 100;
-unsigned long press = bme_press * 100;
+float bme_temp = 10.2;
+float bme_humi = 20.2;
+float bme_press = 50.05;
 
 
 /*-------------------------------------------------------------*/
 void task1(void)
-{   
+{
+    int16_t temp = bme_temp * 100;
+    uint16_t humi = bme_humi * 100;
+    uint32_t press = bme_press * 100;
     char s[16];
-    ConsolePrint(F("Temperature:  %s degrees C\n"), dtostrf(bme_temp, 6, 2, s));
-    ConsolePrint(F("%%RH: %2d%s%%\n"), bme_humi);
-    ConsolePrint(F("Pressure: %2d Pa\n"), bme_press);
-    
-    disableInterrupt();     //  INT0 & INT1 are disabled
-    LoRa.sendData(port, true, F("%04x%04x%06lx"), temp, humi, press);
+    ConsolePrint(F("\n  Task1 invoked\n\n"));
+    ConsolePrint(F("Temperature:  %d degrees C\n"), temp);
+    ConsolePrint(F("%%RH: %d %%\n"), humi);
+    ConsolePrint(F("Pressure: %d Pa\n"), press);
+
+    LoRa.sendData(LoRa_Port_NORM, ECHO, F("%04X%04X%08X"), temp, humi, press);
     LoRa.checkDownLink();
-    enableInterrupt();     //  INT0 & INT1 are enabled
 }
 
 /*-------------------------------------------------------------*/
 void task2(void)
 {
+    char buf[16];
     ConsolePrint(F("\n  Task2 invoked\n\n"));
-    disableInterrupt();     //  INT0 & INT1 are disabled
-    LoRa.sendDataConfirm(port, true, F("%04x%04x%06lx"), temp, humi, press);
-    LoRa.checkDownLink();
-    enableInterrupt();     //  INT0 & INT1 are enabled
-}
+    ConsolePrint(F("Temperature:  %s degrees C\n"), dtostrf(bme_temp, 6, 2, buf));
+    ConsolePrint(F("%%RH: %s %%\n"), dtostrf(bme_humi, 6, 2, buf));
+    ConsolePrint(F("Pressure: %s Pa\n"), dtostrf(bme_press, 6, 2, buf));
 
-/*-------------------------------------------------------------*/
-void task3(void)
-{
-    //
-    //  ToDo: Insert Task code
-    //
+    Payload pl(LoRa.getMaxPayloadSize());
+    pl.set_float(bme_temp);
+    pl.set_float(bme_humi);
+    pl.set_float(bme_press);
+
+    LoRa.sendPayload(LoRa_Port_COMP, ECHO, &pl);
+    LoRa.checkDownLink();
 }
 
 //===============================
 //            Execution interval
-//    TASK( function, interval by second )
+//     TASK( function, initial offset, interval by minute )
 //===============================
 
 TASK_LIST = {

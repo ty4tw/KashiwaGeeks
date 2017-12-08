@@ -1,21 +1,15 @@
 /*
  * Application.cpp
  * 
- *                 MIT License
- *      Copyright (c) 2017 Tomoaki Yamaguchi
- *
- *   This software is released under the MIT License.
- *   http://opensource.org/licenses/mit-license.php
- *
  *   Created on: 2017/11/25
  *       Author: tomoaki@tomy-tech.com
  *
  */
 
 #include <Application.h>
+#include <SoftwareSerial.h>
 #include <avr/wdt.h>
 #include <avr/sleep.h>
-#include <avr/power.h>
 #include <ADB922S.h>
 #include <string.h>
 #include <stdio.h>
@@ -35,17 +29,16 @@ using namespace tomyApplication;
  Global Instance
  ======================================*/
 uint32_t theAlarmTime = 0;
-uint32_t thePrevUTC = 0;
-uint8_t theWDTCSR = WDT_VAL_1S;
-uint8_t theWdtSecs = 1;
+uint8_t theWDTCSR = WDT_VAL_8S;
+uint8_t theWdtSecs = 8;
 volatile uint32_t theTimeCount;
 volatile uint32_t theUTC = 0;
 volatile INT_stat_t theIntStat = INT_INIT;
-volatile bool theWdtStat = false;
+volatile bool theWdtStat = true;
 
-Application* theApplication = new Application();
-bool theConsoleFlag  = true;
-bool theDebugFlag  = true;
+tomyApplication::Application* theApplication = new tomyApplication::Application();
+tomyApplication::SerialLog* theLog = new tomyApplication::SerialLog();
+
 extern TaskList_t theTaskList[];
 
 /*=====================================
@@ -65,12 +58,12 @@ void setWDT(uint8_t sec)
     }
     else if ( sec == 4 )
     {
-        theWDTCSR = WDT_VAL_2S;
+        theWDTCSR = WDT_VAL_4S;
         theWdtSecs = 4;
     }
     else if ( sec == 8 )
     {
-        theWDTCSR = WDT_VAL_4S;
+        theWDTCSR = WDT_VAL_8S;
         theWdtSecs = 8;
     }
     else
@@ -105,23 +98,18 @@ void setupWatchdogTimeout(uint32_t seconds)
     cli();
     theAlarmTime = seconds;
     theTimeCount = 0;
-    thePrevUTC = theUTC;
     sei();
-}
-
-uint32_t elapseTime(void)
-{
-    return theUTC - thePrevUTC;
 }
 
 ISR(WDT_vect)
 {
     cli();
     MCUSR &= ~_BV(WDRF);
-    theUTC += theWdtSecs ;
+    theUTC += theWdtSecs;
+
     if (theAlarmTime > 0)
     {
-        theTimeCount += theWdtSecs ;
+        theTimeCount += theWdtSecs;
         if (theTimeCount >= theAlarmTime )
         {
             theWdtStat = true;
@@ -133,6 +121,51 @@ ISR(WDT_vect)
     }
     sei();
 }
+
+/*
+void DelayMs(unsigned long ms)
+{
+    uint32_t start = micros();
+    stopWatchdog();
+    while (ms > 0) {
+        yield();
+        while ( ms > 0 && (micros() - start) >= 1000) {
+            ms--;
+            start += 1000;
+            theMs ++;
+        }
+    }
+    if ( theMs > 1000 )
+    {
+        uint32_t sec = theMs / 1000;
+        theSec += sec;
+        theMs = theMs % 1000;
+    }
+    startWatchdog();
+}
+*/
+/*
+void AdjustUTC(uint32_t sms, uint32_t ems)
+{
+    uint32_t sec = 0;
+    uint32_t ms = ems - sms;
+    if ( ems < sms )
+    {
+        ms = ems - sms + 0xffff;
+    }
+
+    theMs += ms;
+
+    if ( theMs > 1000 )
+    {
+        sec = theMs / 1000;
+        theSec += sec;
+        theMs = theMs % 1000;
+    }
+
+    //DebugPrint("%lu %lu %lu  %lu %lu.%lu\n", sms, ems, sec, ms, theSec, theMs);
+}
+*/
 
 /*=====================================
  Interrupt Handler
@@ -150,100 +183,57 @@ void interrupt1Handler(void)
 /*=====================================
  Global functions
  ======================================*/
-#define BUF_LEN 128
-
 void DisableConsole(void)
 {
-    theConsoleFlag = false;
+    theLog->disableConsole();
 }
 
 void DisableDebug(void)
 {
-    theDebugFlag = false;
+    theLog->disableDebug();
+}
+
+void ConsoleBegin(unsigned long baud)
+{
+    theLog->begin(baud);
+}
+
+void ConsoleBegin(unsigned long baud, uint8_t rxpin, uint8_t txpin)
+{
+    theLog->begin(baud, rxpin, txpin);
 }
 
 void ConsolePrint(const char *fmt, ...)
 {
-    if ( theConsoleFlag )
-    {
-         char buf[BUF_LEN];
-         va_list args;
-         va_start(args, fmt);
-         vsnprintf(buf, sizeof(buf), fmt, args);
-         va_end(args);
-         Serial.print(buf);
-    }
+     va_list args;
+     va_start(args, fmt);
+     theLog->out(true, LOG_BUF_LEN, fmt, args);
+     va_end(args);
 }
 
 void ConsolePrint(const __FlashStringHelper *fmt, ...)
 {
-   if ( theConsoleFlag )
-   {
-       char buf[BUF_LEN];
-       va_list args;
-        va_start(args, fmt);
-        vsnprintf_P(buf, sizeof(buf), (const char *)fmt, args);
-        va_end(args);
-        Serial.print(buf);
-   }
+    va_list args;
+    va_start(args, fmt);
+    theLog->out(true, LOG_BUF_LEN, fmt, args);
+    va_end(args);
 }
 
 void DebugPrint(const char *fmt, ...)
 {
-    if ( theDebugFlag )
-   {
-      char buf[BUF_LEN];
-      va_list args;
-      va_start(args, fmt);
-      vsnprintf(buf, sizeof(buf), fmt, args);
-      va_end(args);
-      Serial.print(buf);
-   }
+    va_list args;
+    va_start(args, fmt);
+    theLog->out(false, LOG_BUF_LEN, fmt, args);
+    va_end(args);
 }
 
 void DebugPrint(const __FlashStringHelper *fmt, ...)
 {
-    if ( theDebugFlag )
-   {
-       char buf[BUF_LEN];
-       va_list args;
-        va_start(args, fmt);
-        vsnprintf_P(buf, sizeof(buf), (const char *)fmt, args);
-        va_end(args);
-        Serial.print(buf);
-   }
-}
-
-#if defined( SHOW_TASK_LIST ) || defined( SHOW_SYSTIME)
-void debugout(const char *fmt, ...)
-{
-  char buf[BUF_LEN];
-  va_list args;
-  va_start(args, fmt);
-  vsnprintf(buf, sizeof(buf), fmt, args);
-  va_end(args);
-  Serial.print(buf);
-}
-
-void debugout(const __FlashStringHelper *fmt, ...)
-{
-   char buf[BUF_LEN];
-   va_list args;
+    va_list args;
     va_start(args, fmt);
-    vsnprintf_P(buf, sizeof(buf), (const char *)fmt, args);
+    theLog->out(false, LOG_BUF_LEN, fmt, args);
     va_end(args);
-    Serial.print(buf);
 }
-#else
-void debugout(const char *fmt __attribute__ ((unused)), ...)
-{
-
-}
-void debugout(const __FlashStringHelper *fmt  __attribute__ ((unused)), ...)
-{
-
-}
-#endif
 
 int getFreeMemory(void)
 {
@@ -263,6 +253,30 @@ int getFreeMemory(void)
     return freeMemory;
 }
 
+uint8_t getPinMode(uint8_t pin)
+{
+  uint8_t bit = digitalPinToBitMask(pin);
+  uint8_t port = digitalPinToPort(pin);
+
+  volatile uint8_t *reg, *out;
+  reg = portModeRegister(port);
+  out = portOutputRegister(port);
+
+  if (*reg & bit)
+  {
+    return OUTPUT;
+  }
+  else if (*out & bit)
+  {
+    return INPUT_PULLUP;
+  }
+  else
+  {
+    return INPUT;
+  }
+}
+
+
 //
 //
 //   Arduino functions
@@ -279,18 +293,9 @@ void resetArduino(void) __attribute__((weak));
 
 void setup(void)
 {
-    for ( uint8_t i = 0; i < 20; i++ )
-    {
-        pinMode(i, OUTPUT);   // To save power
-    }
-    Serial.begin(9600);
-    if (  ! theConsoleFlag  && !theDebugFlag )
-    {
-        power_usart0_disable();       // Serial
-    }
     start();
-    theApplication->enableInterrupts();
     theApplication->initialize();
+    theLog->savePower();
     startWatchdog();
 }
 
@@ -306,7 +311,7 @@ void resetArduino()
 
 void int0D2(void)
 {
-    DebugPrint(F("***** INT0 *****\n"));
+    DebugPrint(F("----- INT0 -----\n"));
 }
 
 void int1D3(void)
@@ -319,27 +324,30 @@ void start(void)
 
 }
 
-void sleep(void)
-{
-    DebugPrint(F("sleep\n"));
-}
-
-void wakeup(void)
-{
-    DebugPrint(F("wakeup\n"));
-}
 
 uint32_t getSysTime(void)
 {
     return theUTC;
 }
 
+
+void sleep(void)
+{
+    DebugPrint(F("\nsleep\n"));
+}
+
+void wakeup(void)
+{
+    DebugPrint(F("wakeup\n\n"));
+}
+
+
 //
 //
 //    Class Application
 //
 //
-Application::Application(void) : _sleepMode{false}
+Application::Application(void) : _sleepMode{false}, _int0enable{false}, _int1enable{false}
 {
     _taskMgr = new TaskManager();
 }
@@ -349,36 +357,45 @@ Application::~Application(void)
     delete _taskMgr;
 }
 
-// initialize
+
 void Application::initialize(void)
 {
-    DebugPrint(F("\n\n_/_/_/ KashiwaGeeksFrame's TaskManager starts. _/_/_/\r\n\n\n"));
+    DebugPrint(F("\n\n_/_/_/ KashiwaGeeks 0.8.1 _/_/_/\r\n\n\n"));
+    if ( getPinMode(2) == INPUT_PULLUP)
+    {
+        _int0enable = true;
+    }
+    if ( getPinMode(3) == INPUT_PULLUP)
+    {
+        _int1enable = true;
+    }
 
     for (uint8_t i = 0; theTaskList[i].callback != 0; i++)
     {
-        uint32_t executedTime = theUTC;
-        if ( theTaskList[i].start == 0 )
-        {
-            theTaskList[i].callback();
-        }
-        _taskMgr->addTask(theTaskList[i].callback, theTaskList[i].start, theTaskList[i].interval, executedTime);
+        theTaskList[i].start = theTaskList[i].start * 60;
+        theTaskList[i].interval = theTaskList[i].interval * 60;
+        _taskMgr->addTask(theTaskList[i].callback, theTaskList[i].start, theTaskList[i].interval);
 
-#ifdef SHOW_TASK_LIST
+        #ifdef SHOW_TASK_LIST
         _taskMgr->printTaskEvents();
-#endif
+        #endif
     }
 }
 
-//    run
+
 void Application::run(void)
 {
-    systemSleep();
+    if (theIntStat == INT_INT0)
+    {
+        checkInt(2);
+    }
+    else if (theIntStat == INT_INT1)
+    {
+        checkInt(3);
+    }
 
     if ( theWdtStat )
     {
-#if defined( SHOW_TASK_LIST ) || defined( SHOW_SYSTIME)
-        ConsolePrint( F("\nSystem Time:%ld elapse:%ld[sec]\n"),theUTC, elapseTime());
-#endif
         if ( _sleepMode )
         {
             wakeup();
@@ -387,32 +404,16 @@ void Application::run(void)
         _taskMgr->execute();
         theWdtStat = false;
     }
-    else if (theIntStat == INT_INT0)
-    {
-        if ( _sleepMode )
-        {
-            wakeup();
-            _sleepMode = false;
-        }
-        disableInterrupts();
-        int0D2();
-        enableInterrupts();
-    }
-    else if (theIntStat == INT_INT1)
-    {
-        if ( _sleepMode )
-        {
-            wakeup();
-            _sleepMode = false;
-        }
-        disableInterrupts();
-        int1D3();
-        enableInterrupts();
-    }
+    systemSleep();
 }
 
 
-//    systemSleep
+void Application::rerun(void (*_callbackPtr)(), uint32_t second)
+{
+    _taskMgr->addTask(_callbackPtr, second, 0);
+}
+
+
 void Application::systemSleep(void)
 {
     if ( !_sleepMode )
@@ -420,29 +421,71 @@ void Application::systemSleep(void)
         sleep();   // set device low power mode
         _sleepMode = true;
     }
-    Serial.flush();
+    theLog->flush();
     set_sleep_mode(SLEEP_MODE);
     sleep_enable();
+    enableInterrupts();
     sleep_mode();   // sleep
     sleep_disable(); // wakeup by WDT & INT0 or INT1
+    disableInterrupts();
 }
 
-//    disableInterrupts
+void Application::checkInt(uint8_t pin)
+{
+    indicator(true);
+    delay(30);
+    while ( true )
+    {
+        if ( digitalRead(pin) == HIGH )
+        {
+            break;
+        }
+    }
+    indicator(false);
+
+    if ( _sleepMode )
+    {
+        wakeup();
+        _sleepMode = false;
+    }
+
+    if ( pin == 2 )
+    {
+        int0D2();
+    }
+    else
+    {
+        int1D3();
+    }
+    theIntStat = INT_INIT;
+}
+
 void Application::disableInterrupts(void)
 {
-    detachInterrupt(0);
-    detachInterrupt(1);
+    if ( _int0enable)
+    {
+        detachInterrupt(0);
+    }
+    if ( _int1enable)
+    {
+        detachInterrupt(1);
+    }
 }
 
-//    enableInterrupts
+
 void Application::enableInterrupts(void)
 {
-    theIntStat = INT_INIT;
-    attachInterrupt(0, interrupt0Handler, RISING);
-    attachInterrupt(1, interrupt1Handler, RISING);
+    if ( _int0enable)
+    {
+        attachInterrupt(0, interrupt0Handler, LOW);
+    }
+    if ( _int1enable)
+    {
+        attachInterrupt(1, interrupt1Handler, LOW);
+    }
 }
 
-//    indicator
+
 void Application::indicator(bool onoff)
 {
     if (onoff)
@@ -455,11 +498,7 @@ void Application::indicator(bool onoff)
     }
 }
 
-//   getElapseTime
-uint32_t Application::getElapseTime(void)
-{
-    return elapseTime();
-}
+
 
 //
 //
@@ -480,13 +519,12 @@ TaskManager::~TaskManager(void)
     }
 }
 
-void TaskManager::addTask(void (*task)(), uint32_t start, uint32_t interval, uint32_t executedTime)
+void TaskManager::addTask(void (*task)(), uint32_t start, uint32_t interval)
 {
     TaskEvent* event = new TaskEvent(this);
     event->setEventCallback(task);
-    event->setTimeValue(interval);
     event->setRemainTime(start);
-    event->setExecutedTime(executedTime);
+    event->setIntervalTime(interval);
     startEvent(event);
 }
 
@@ -495,53 +533,43 @@ void TaskManager::execute(void)
     TaskEvent* taskEv = 0;
     TaskEvent* execList = 0;
     TaskEvent* prevTaskEv = 0;
-    uint32_t elapsetime = elapseTime();
+    uint32_t elapsetime = 0;
 
-    if (elapsetime >= _head->_remainTime)
+    if ( _head == 0 )
     {
-        _head->_remainTime = 0;
-    }
-    else
-    {
-        _head->_remainTime -= elapsetime;
+        return;
     }
 
+    _head->_remainTime = 0;
     taskEv = _head;
 
-    while ((_head != 0) && (_head->_remainTime == 0))
+    while ((_head != 0) && (_head->_remainTime == 0) )
     {
         taskEv = _head;
         _head = _head->_next;
 
         if (taskEv->_callbackPtr)
         {
-            // execute Task
-            taskEv->setExecutedTime(theUTC);
-            taskEv->_callbackPtr();
+            taskEv->execute();
         }
 
         // Add the executed Event to the list.
-        uint32_t  elapse = theUTC - taskEv->_executedTime;
-        if ( elapse >= taskEv-> _reloadTime)
+        if ( taskEv->_interval > 0 )
         {
-            taskEv->_remainTime = taskEv-> _reloadTime - elapse;
-        }
-        else
-        {
-            taskEv->_remainTime = 0;
-        }
-        taskEv->_isRunning = false;
-        taskEv->_next = 0;
+            taskEv->_remainTime = taskEv-> _interval * taskEv->_count + taskEv->_startTime - getSysTime();
+            taskEv->_isRunning = false;
+            taskEv->_next = 0;
 
-        if (execList == 0)
-        {
-            execList = taskEv;
-            prevTaskEv = taskEv;
-        }
-        else
-        {
-            prevTaskEv->_next = taskEv;
-            prevTaskEv = taskEv;
+            if (execList == 0)
+            {
+                execList = taskEv;
+                prevTaskEv = taskEv;
+            }
+            else
+            {
+                prevTaskEv->_next = taskEv;
+                prevTaskEv = taskEv;
+            }
         }
     }
 
@@ -577,15 +605,10 @@ void TaskManager::startEvent(TaskEvent* event)
         return;
     }
 
-    if ( event->_remainTime == 0 )
-    {
-        event->_remainTime = event->_reloadTime;
-    }
-
     event->_isRunning = false;
 
 #ifdef SHOW_TASK_LIST
-    debugout( F("---Event start ---- remain:%ld Interval:%ld\n"), event->_remainTime, event->_reloadTime);
+    DebugPrint(F("\n  -startEvent() sys:%ld remain:%lu run:%d Interval:%lu  start:%lu cnt:%lu\n"), getSysTime(), event->_remainTime, event->_isRunning, event->_interval, event->_startTime, event->_count);
 #endif
 
     if (_head == 0)
@@ -673,6 +696,7 @@ void TaskManager::insertEvent(TaskEvent* event)
    }
 }
 
+/*
 void TaskManager::stopEvent(TaskEvent* event)
 {
     uint32_t elapsedTime = 0;
@@ -687,7 +711,7 @@ void TaskManager::stopEvent(TaskEvent* event)
     {
         if (_head->_isRunning)
         {
-            elapsedTime = elapseTime();
+            elapsedTime = _head->elapseTime();
             if (elapsedTime > event->_remainTime)
             {
                 elapsedTime = event->_remainTime;
@@ -753,6 +777,7 @@ void TaskManager::stopEvent(TaskEvent* event)
         }
     }
 }
+*/
 
 void TaskManager::eraseEvent(TaskEvent* event)
 {
@@ -795,12 +820,6 @@ void TaskManager::eraseEvent(TaskEvent* event)
     }
 }
 
-void TaskManager::resetEvent(TaskEvent* event)
-{
-    startEvent(event);
-    stopEvent(event);
-}
-
 bool TaskManager::isExist(TaskEvent* event)
 {
     TaskEvent* cur = _head;
@@ -817,19 +836,17 @@ bool TaskManager::isExist(TaskEvent* event)
 
 void TaskManager::printTaskEvents(void)
 {
-#ifdef SHOW_TASK_LIST
     TaskEvent*  taskEv = _head;
-    debugout(F("---Task Link----\n"));
+
      while( taskEv )
      {
-         debugout(F("remain:%ld run:%d Interval:%ld\n"), taskEv->_remainTime, taskEv->_isRunning, taskEv->_reloadTime);
+         DebugPrint(F("  -remain:%lu run:%d Interval:%lu start:%lu cnt:%lu\n"), taskEv->_remainTime, taskEv->_isRunning, taskEv->_interval, taskEv->_startTime, taskEv->_count);
          taskEv = taskEv->_next;
      }
-     debugout(F("\n"));
-#endif
+     DebugPrint(F("\n"));
 }
 
-///
+//
 //
 //    Class TaskEvent
 //
@@ -837,7 +854,7 @@ void TaskManager::printTaskEvents(void)
 TaskManager*  TaskEvent::_taskMgr = 0;
 
 TaskEvent::TaskEvent(TaskManager* mgr) :
-        _remainTime{0}, _reloadTime{0}, _executedTime{0}, _callbackPtr{0},  _next{0}
+        _remainTime{0}, _interval{0}, _count{0}, _startTime{0}, _callbackPtr{0},  _next{0}
 {
     _isRunning = false;
     if ( _taskMgr  == 0 )
@@ -854,10 +871,19 @@ TaskEvent::~TaskEvent(void)
     }
 }
 
-void TaskEvent::setTimeValue(uint32_t value)
+void TaskEvent::execute(void)
 {
-    _remainTime = value;
-    _reloadTime = value;
+    if ( _count == 0 )
+    {
+        _startTime = getSysTime();
+    }
+    _count++;
+    _callbackPtr();
+}
+
+void TaskEvent::setIntervalTime(uint32_t value)
+{
+    _interval = value;
 }
 
 void TaskEvent::setEventCallback(void (*callback)())
@@ -865,13 +891,101 @@ void TaskEvent::setEventCallback(void (*callback)())
     _callbackPtr = callback;
 }
 
-void TaskEvent::setExecutedTime(uint32_t sec)
-{
-    _executedTime = sec;
-}
-
 void TaskEvent::setRemainTime(uint32_t sec)
 {
     _remainTime = sec;
 }
+//
+//
+//    Class SerialLog
+//
+//
+SerialLog::SerialLog(void):
+        _serial{0}, _serialFlg{false}, _consoleFlg{true}, _debugFlg{true}
+{
 
+}
+
+SerialLog::~SerialLog(void)
+{
+
+}
+
+void SerialLog::begin(unsigned long baud, uint8_t rxpin, uint8_t txpin)
+{
+    _serial = new SoftwareSerial( rxpin, txpin);
+    _serial->begin(baud);
+    _serialFlg = true;
+}
+
+void SerialLog::begin(unsigned long baud)
+{
+    Serial.begin(baud);
+    _serialFlg = false;
+}
+
+void SerialLog::out(bool console, uint8_t len, const char* fmt, va_list args)
+{
+    if ( (console && _consoleFlg) || (!console && _debugFlg) )
+    {
+        char* buf = (char*)malloc(len);
+
+        vsnprintf(buf, len, fmt, args);
+        print(buf);
+        free(buf);
+    }
+}
+
+void SerialLog::out(bool console, uint8_t len, const  __FlashStringHelper* fmt, va_list args)
+{
+    if ( (console && _consoleFlg) || (!console && _debugFlg) )
+    {
+        char* buf = (char*)malloc(len);
+
+        vsnprintf_P(buf, len, (const char *)fmt, args);
+        print(buf);
+        free(buf);
+    }
+}
+
+void SerialLog::print(char* buf)
+{
+    if ( _serialFlg )
+    {
+        if ( _serial->isListening() )
+        {
+            _serial->listen();
+        }
+        _serial->print(buf);
+    }
+    else
+    {
+        Serial.print(buf);
+    }
+}
+
+void SerialLog::disableDebug(void)
+{
+    _debugFlg = false;
+}
+
+void SerialLog::disableConsole(void)
+{
+    _consoleFlg = false;
+}
+
+void SerialLog::savePower(void)
+{
+    if (  ! _consoleFlg  && !_debugFlg &&  !_serialFlg)
+    {
+        power_usart0_disable();       // Serial
+    }
+}
+
+void SerialLog::flush(void)
+{
+    if ( !_serialFlg )
+    {
+        Serial.flush();
+    }
+}
