@@ -1,0 +1,31 @@
+########################################
+# Syntax Coloring Map For LoRaWAN Client
+########################################
+
+########################################
+# Datatypes (KEYWORD1)
+########################################
+
+ADB922S KEYWORD1
+########################################
+# Methods and Functions (KEYWORD2)
+########################################
+begin KEYWORD2
+connect KEYWORD2
+reconnect KEYWORD2
+sendData KEYWORD2
+sendBinary KEYWORD2
+sendDataConfirm KEYWORD2
+sendBinaryConfirm KEYWORD2
+getDownLinkData KEYWORD2
+sleep KEYWORD2
+wakeup KEYWORD2
+getHwModel KEYWORD2
+getVersion KEYWORD2
+getEUI KEYWORD2
+getMaxPayloadSize KEYWORD2
+setTxRetryCount KEYWORD2
+########################################
+# Constants (LITERAL1)
+########################################
+
