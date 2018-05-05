@@ -168,6 +168,8 @@ private:
     uint8_t _adrAckDelay;
     uint8_t _finalDelay;
     uint8_t _noFreeChCnt;
+    uint8_t _nbGw;
+    uint8_t _margin;
 };
 
 }

@@ -28,7 +28,8 @@ const char* loraTxConfirmCmd = "lorawan tx cnf";
 
 ADB922S::ADB922S(void):
         _baudrate{9600}, _joinStatus{not_joined}, _txTimeoutValue{LoRa_RECEIVE_DELAY2}, _stat{0}, _txOn{false}, _minDR{DR2},
-        _minDROn{false}, _adrAckCnt{0}, _adrReqBitOn{false}, _adrAckDelay{ADR_ACK_DELAY}, _adrAckLimit{ADR_ACK_LIMIT}, _noFreeChCnt{0}
+        _minDROn{false}, _adrAckCnt{0}, _adrReqBitOn{false}, _adrAckDelay{ADR_ACK_DELAY}, _adrAckLimit{ADR_ACK_LIMIT}, _noFreeChCnt{0},
+        _nbGw{0}, _margin{0}
 {
     _serialPort = new SoftwareSerial(LoRa_Rx_PIN, LoRa_Tx_PIN);
     _txRetryCount = 1;
@@ -63,7 +64,8 @@ bool ADB922S::begin(uint32_t baudrate, LoRaDR dr, uint8_t txRetry )
                if ( checkBaudrate(br[i]) == 0 )
                {
                    LoRaDebug( F("Set Baudrate to %ld\n"), baudrate);
-                   sprintf(cmd, "mod set_baudrate %ld",  baudrate);
+                   String fmt = F("mod set_baudrate %ld");
+                   sprintf(cmd, fmt.c_str(),  baudrate);
                    send(cmd, F(""),F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME);
                    _serialPort->begin(_baudrate);
                    if (send(F("mod set_echo off"), F("Ok"),F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME) != LoRa_RC_SUCCESS )
@@ -117,7 +119,8 @@ int  ADB922S::checkBaudrate(uint32_t baudrate)
 bool ADB922S::setTxRetryCount(uint8_t retry)
 {
     char  cmd[26];
-    sprintf(cmd, "lorawan set_txretry %d",  retry);
+    String fmt = F("lorawan set_txretry %d");
+    sprintf(cmd, fmt.c_str(),  retry);
     if ( send(cmd, F("Ok"), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME) == 0 )
     {
         _txRetryCount = retry;
@@ -508,7 +511,7 @@ int ADB922S::transmitBinaryData(uint8_t port, bool echo, bool confirm, uint8_t* 
         pos = data + strlen(data);
     }
 
-    _stat = send(data, "tx_ok", "rx", echo, _txTimeoutValue, buffer, (20 + _maxPayloadSize*2+1 +1 ) );
+    _stat = send(data, F("tx_ok"), F("rx"), echo, _txTimeoutValue, buffer, (20 + _maxPayloadSize*2+1 +1 ) );
     checkRecvData(buffer, confirm);
 exit:
     return _stat;
@@ -679,7 +682,8 @@ uint8_t ADB922S::ctoh(uint8_t ch)
 int ADB922S::setDr(LoRaDR dr)
 {
     char  cmd[18];
-    sprintf(cmd, "lorawan set_dr %d",  dr);
+    String fmt = F("lorawan set_dr %d");
+    sprintf(cmd, fmt.c_str(),  dr);
     if ( send(cmd, F("Ok"), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME) == 0 )
     {
         uint8_t pll[] = { 0, 0, 11, 53, 125, 242 };
@@ -709,7 +713,8 @@ bool ADB922S::setLowerDr(void )
 bool ADB922S::setMaxPower(void)
 {
     char  cmd[20];
-    sprintf(cmd, "lorawan set_power 5");
+    String cdata = F("lorawan set_power 5");
+    sprintf(cmd, cdata.c_str());
     if ( send(cmd, F("Ok"), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME) == 0 )
     {
         return true;
@@ -721,7 +726,8 @@ bool ADB922S::setADR(bool onOff)
 {
     char  cmd[20];
     const char* stat = (onOff ? "on" : "off");
-    sprintf(cmd, "lorawan set_adr %s",  stat);
+    String fmt = F("lorawan set_adr %s");
+    sprintf(cmd, fmt.c_str(),  stat);
     if ( send(cmd, F("Ok"), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME) == 0 )
     {
         _adrOn = true;
@@ -745,7 +751,8 @@ bool ADB922S::setChStat(uint8_t ch, bool onOff)
 {
     char  cmd[30];
     const char* stat = (onOff ? "on" : "off");
-    sprintf(cmd, "lorawan set_ch_status %d %s",  ch, stat);
+    String fmt = F("lorawan set_ch_status %d %s");
+    sprintf(cmd, fmt.c_str(),  ch, stat);
     if ( send(cmd, F("Ok"), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME) == 0 )
     {
         return true;
@@ -801,7 +808,8 @@ bool ADB922S::isAdrOn(void)
 int ADB922S::getChPara(CHID chId)
 {
     char  cmd[24];
-    sprintf(cmd, "lorawan get_ch_para %d",  chId);
+    String fmt = F("lorawan get_ch_para %d");
+    sprintf(cmd, fmt.c_str(),  chId);
     send(cmd, F("Ok"), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME);
     return 1;
 }
@@ -810,7 +818,8 @@ bool ADB922S::getChStat(CHID chId)
 {
     char stat[5];
     char  cmd[26];
-    sprintf(cmd, "lorawan get_ch_status %d",  chId);
+    String fmt = F("lorawan get_ch_status %d");
+    sprintf(cmd, fmt.c_str(),  chId);
     send( cmd, F(""), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME, stat, 4);
      if ( strcmp(stat, "on") == 0 )
      {
@@ -822,7 +831,8 @@ bool ADB922S::getChStat(CHID chId)
 int ADB922S::getDcBand(CHID bandId)
 {
     char  cmd[24];
-    sprintf(cmd, "lorawan get_dc_band %d",  bandId);
+    String fmt = F("lorawan get_dc_band %d");
+    sprintf(cmd, fmt.c_str(),  bandId);
     send( cmd, F(""), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME);
      return 0;
 }

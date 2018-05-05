@@ -18,8 +18,6 @@ uint8_t portTemp = 13;
 #define BPS_57600     57600
 #define BPS_115200   115200
 
-#define CONSOLE_Rx_PIN    4
-#define CONSOLE_Tx_PIN    5
 
 void start()
 {
