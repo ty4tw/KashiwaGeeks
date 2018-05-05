@@ -47,8 +47,8 @@ void start()
         }
     }
 
-    /* set minimum DR. to expand the payload's size. */
-    LoRa.setDr(DR3);  // DR0 to DR5
+    /* Set  DR3 */
+    LoRa.setDR(DR3);   // DR0 to DR5
 
     /*  join LoRaWAN */
     LoRa.join();

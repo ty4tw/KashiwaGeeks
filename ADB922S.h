@@ -27,10 +27,15 @@ namespace tomyApplication
 #define LoRa_RC_SUCCESS            0
 #define LoRa_RC_DATA_TOO_LONG     -1
 #define LoRa_RC_NOT_JOINED        -2
-#define LoRa_RC_ERROR             -3
+#define LORA_RC_NO_FREE_CH   -3
+#define LoRa_RC_BUSY    -4
+#define LoRa_RC_ERROR             -5
 #define LoRa_Rx_PIN               11
 #define LoRa_Tx_PIN               12
 #define LoRa_WAKEUP_PIN            7
+
+#define ADR_ACK_LIMIT     5
+#define ADR_ACK_DELAY   2
 
 #ifndef LoRaDebug
 #ifdef SHOW_LORA_TRANSACTION
@@ -42,6 +47,7 @@ namespace tomyApplication
 #endif
 #endif
 
+#define MAX_NO_FREE_CH_CNT  5
 #ifndef PORT_LIST
 #define PORT_LIST   PortList_t  thePortList[]
 #define PORT(...)         {__VA_ARGS__}
@@ -76,7 +82,7 @@ public:
     ADB922S(void);
     ~ADB922S(void);
 
-    bool begin(uint32_t baudrate = 9600, uint8_t retryTx = 1 );
+    bool begin(uint32_t baudrate, LoRaDR dr = DR2, uint8_t retryTx = 1 );
     bool isConnect(void);
     bool join(void);
     int sendData(uint8_t port, bool echo, const __FlashStringHelper* format, ...);
@@ -100,6 +106,7 @@ public:
 
     int setDr(LoRaDR dr);
     bool setADR(bool onOff);
+    bool setADRParams(uint8_t adrAckLimit, uint8_t adrAckDelay);
     bool setLinkCheck(void);
     bool saveConfig(void);
     int setConfig(void) {return 0;}
@@ -112,6 +119,7 @@ public:
     int getDcBand(CHID bandId);
     uint16_t getUpcnt(void);
     uint16_t getDowncnt(void);
+    int reset(void);
 
 private:
     void clearCmd(void);
@@ -123,6 +131,12 @@ private:
     int send(String cmd, String resp1, String resp2, bool echo = false, uint32_t timeout = LoRa_INIT_WAIT_TIME, char* returnValue = 0, uint8_t len = 0);
     int send(const __FlashStringHelper* cmd, const __FlashStringHelper* resp1, const __FlashStringHelper* resp2, bool echo = false , uint32_t = 0, char* returnValue = 0, uint8_t len = 0);
     uint8_t ctoh(uint8_t ch);
+    void checkRecvData(char* buff, bool conf);
+    void controlADR(void);
+    void setADRReqBit(void);
+    bool setMaxPower(void);
+    bool setLowerDr(void);
+    bool setChStat(uint8_t ch, bool stat);
 
     SoftwareSerial*  _serialPort;
     uint32_t  _baudrate;
@@ -133,7 +147,17 @@ private:
     String  _downLinkData;
     Payload _payload;
     int  _stat;
-    bool   _txFlg;
+    bool _txOn;
+    bool _adrOn;
+    bool _adrReqBitOn;
+    bool _maxPwrOn;
+    LoRaDR _minDR;
+    bool _minDROn;
+    uint16_t _adrAckCnt;
+    uint8_t _adrAckLimit;
+    uint8_t _adrAckDelay;
+    uint8_t _finalDelay;
+    uint8_t _noFreeChCnt;
 };
 
 }

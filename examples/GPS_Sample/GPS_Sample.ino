@@ -43,17 +43,16 @@ void start()
         }
     }
 
-    /* set minimum DR. to expand the payload's size. */
-    //LoRa.setDr(DR3);  // DR0 to DR5
-
     /* setup the GPS */
     pinMode(8, INPUT);
     gpsSerial.begin(BPS_9600);
     GpsWakeup();
     while( !isGpsReady() ){ };
 
+
     /*  join LoRaWAN */
     LoRa.join();
+
 }
 //================================
 //          Power save functions

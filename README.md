@@ -88,10 +88,11 @@ ADB922S represents an LoRaWAN Arduino Sheild which uses TLM922S device. Cut D2, 
   
 ___    
     
-**1) bool begin(uint32_t baudrate = 9600, uint8_t retryTx = 1, uint8_t retryJoine = 1 );**    
+**1) bool begin(uint32_t baudrate,LoRaDR dr, uint8_t retryTx = 1, uint8_t retryJoine = 1 );**    
 
 **Function:** Initialize ADB922S    
-**Parameter uint32_t bauderate:** bauderate of a sirial port, valid values are 9600, 19200, 57600, 115200.    
+**Parameter uint32_t bauderate:** bauderate of a sirial port, valid values are 9600, 19200, 57600, 115200.  
+**Parameter LoRaDR dr:** Minimum DataRate.    
 **Parameter uint8_t retryTx:** transmission retry count, valid value range from 0 to 255.    
 **Parameter uint8_t retryJoin:** retry count of join.    
 **Return Value:** Success true, fail false.    
@@ -112,7 +113,15 @@ ___
 **Return Value:** FRMPayload length, setup fail the -1.    
 ___    
     
-**4) int sendData(uint8_t port, bool echo, const __FlashStringHelper &format, ...);**    
+**4)  bool setADRParam(uint8_t adrAckLimit, uint8_t adrAckDelay);**
+    
+**Function:**  Setup ADR parameters and ADR enables        
+**Parameter:** uint8_t adrAckLimit:** ADR_ACK_LIMIT.     
+**Parameter:** uint8_tadrAckDelay:**  ADR_ACK_DELAY.
+**Return Value:** ttrue Setup normal end, false Error   
+___
+
+**5) int sendData(uint8_t port, bool echo, const __FlashStringHelper &format, ...);**    
 
 **Function:** Transmit String data. 11) getDownLinkData(void) can be used to check if the DownLink data is received.    
 **Parameter uint8_t port:** Data transmitted is sent to the application specified by the port.    
@@ -125,7 +134,7 @@ ___
 **Return Value LoRa_RC_ERROR:** other errors.    
 ___    
     
-**5) int sendDataConfirm(uint8_t port, bool echo, const __FlashStringHelper &format, ...);**    
+**6) int sendDataConfirm(uint8_t port, bool echo, const __FlashStringHelper &format, ...);**    
 
 **Function:** Transmit String data with confirmation request. 11) getDownLinkData(void) can be used to check if the DownLink data is received.   
 **Parameter uint8_t port:** Data transmitted is sent to the application specified by the port.    
@@ -138,7 +147,7 @@ ___
 **Return Value LoRa_RC_ERROR:** other errors.    
 ___    
     
-**6)  int sendPayload(uint8_t port, bool echo, &Payload);**    
+**7)  int sendPayload(uint8_t port, bool echo, &Payload);**    
     
 **Function:** Transmit a Payload instance.  11) getDownLinkData(void) can be used to check if the DownLink data is received.     
 **Parameter uint8_t port:** Data transmitted is sent to the application specified by the port.    
@@ -150,7 +159,7 @@ ___
 **Return Value LoRa_RC_ERROR:** other errors.  
 ___
     
-**7) int sendPayloadConfirm(uint8_t port, bool echo, &Payload);**    
+**8) int sendPayloadConfirm(uint8_t port, bool echo, &Payload);**    
 
 **Function:** Transmit a Payload instance with confirmation request.  11) getDownLinkData(void) can be used to check if the DownLink data is received.     
 **Parameter uint8_t port:** Data transmitted is sent to the application specified by the port.    
@@ -162,42 +171,42 @@ ___
 **Return Value LoRa_RC_ERROR:** other errors.    
 ___    
     
-**8)  Payload &getDownLinkPayload(void);**    
+**9)  Payload &getDownLinkPayload(void);**    
     
 **Function:** Acquire a Payload instance from the DownLink data previously recieved.    
 **Parameter:** None    
 **Return Value:** Pointer of the Payload instance.  0, if no DownLink data from the previous received.    
 ___
     
-**9)  uint8_t getDownLinkPort( void);**    
+**10)  uint8_t getDownLinkPort( void);**    
     
 **Function:** Acquire the port from previously received DownLink data.    
 **Parameter:** None    
 **Return Value:** Port(number), 0 if no data.    
 ___  
     
-**10)  String getDownLinkData(void);**    
+**11)  String getDownLinkData(void);**    
     
 **Function:** Acquire the string data excludeding port(number) from previously received DownLink data.    
 **Parameter:** None    
 **Return Value:** String excluding Port. Null string if no data.    
 ___
     
-**11) void sleep(void);**    
+**12) void sleep(void);**    
     
 **Function:** Set to infinite deep sleep. ( D7Pin is used to wakeup)   
 **Parameter:** None    
 **Return value:** None    
 ___
     
-**12) void wakeup(void);**    
+**13) void wakeup(void);**    
      
 **Function:** Wake up from infinte deep sleep.    
 **Parameter:** None    
 **Return value:** None    
 ___
     
-**13)  void getHwModel(char &model, uint8_t length);**    
+**14)  void getHwModel(char &model, uint8_t length);**    
     
 **Function:** Acquire the Model name of TLM922S.    
 **Parameter char &model:** Specified  return address fro the Model name.    
@@ -205,7 +214,7 @@ ___
 **Return Value:** String of Model name in the length specified returned in model argument.    
 ___
     
-**14)  void getVersion(char &version, uint8_t length);**    
+**15)  void getVersion(char &version, uint8_t length);**    
       
 **Function:** Acquire the version of TLM922S.   
 **Parameter char &version:** Specified  return address fro the version.    
@@ -213,7 +222,7 @@ ___
 **Return Value:** String of version in the length specified returned in version argment.     
 ___
     
-**15)  void getEUI(char &eui, uint8_t length);**    
+**16)  void getEUI(char &eui, uint8_t length);**    
     
 **Function:** Acquire the DevEUI.    
 **Parameter char &version:** Specified  return address fro the devEUI.    
@@ -221,33 +230,34 @@ ___
 **Return Value:** String of version in the length specified returned in eui argment. 
 ___
     
-**16)  uint8_t getMaxPayloadSize(void);**    
+**17)  uint8_t getMaxPayloadSize(void);**    
     
 **Function:** Acquire the maximum transmittable payloadd length setten by setDR().    
 **Parameter:** None    
 **Return Value:** Transmittable Payload length.    
 ___
     
-**17)  bool setTxRetryCount(uint8_t retry);**
+**18)  bool setTxRetryCount(uint8_t retry);**
     
 **Function:** Set the transmission retry count. Valid value, 0 to 255.    
 **Parameter:** retry counts.    
 **Return Value:** True if normal complete. otherwise, false.    
 ____
     
-**18)  uint8_t getTxRetryCount(void);**    
+**19)  uint8_t getTxRetryCount(void);**    
     
 **Function:** Acquire the value of transmission retry count.    
 **Parameter:** None    
 **Return Value:** the value of transmission retry count 
 ___
     
-**19)  void checkDownLink(void);**    
+**20)  void checkDownLink(void);**    
     
 **Function:**  Excecutes the callback function that is linked to the specified port by PORT_LINK if DownLink data is received.    
 **Parameter:** None    
 **Return Value:** None    
 ___
+
     
 ## 3. RAK811 Class methods    
 RAK811 represents an LoRaWAN Arduino Sheild which uses RAK811 device.   

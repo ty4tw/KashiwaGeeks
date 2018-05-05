@@ -360,7 +360,7 @@ Application::~Application(void)
 
 void Application::initialize(void)
 {
-    DebugPrint(F("\n\n_/_/_/ KashiwaGeeks 0.8.1 _/_/_/\r\n\n\n"));
+    DebugPrint(F("\n\n_/_/_/ KashiwaGeeks 0.9.0 _/_/_/\r\n\n\n"));
     if ( getPinMode(2) == INPUT_PULLUP)
     {
         _int0enable = true;

@@ -62,9 +62,6 @@ void start()
     }
     LoRa.setConfig(RAK_CONFIG);
 
-    /* set minimum DR. to expand the payload's size. */
-    //LoRa.setDrDRr3);  // DR0 to DR5
-
     /* setup the GPS */
     gps.begin(9600, 8, 9);
     ConsolePrint(F("Initilizing GPS\n"));
@@ -72,6 +69,9 @@ void start()
 
     /* setup I2C */
     Wire.begin();
+
+    /* Set  DR */
+    LoRa.setDr(DR3);  // DR0-DR5
 
     /*  join LoRaWAN */
     LoRa.join();

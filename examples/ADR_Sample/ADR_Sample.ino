@@ -1,8 +1,24 @@
+/****************************************************************
+ *
+ *            I M P O R T A N T    N O T I C E
+ *
+ * 1. Uncomment the line17 of AppDefine.h in the library
+ * 2. Change the line 33 of Application.cpp as follows
+ *
+ *     uint8_t theWdtSecs = 8;    ==>  uint8_t theWdtSecs = 30;
+ *
+ * Before compling to see a detail log of this sketch.
+ *
+ * Those changes help you to see what's going on in a short time.
+ *
+ ****************************************************************/
+
 #include <KashiwaGeeks.h>
 
 #define ECHO true
 
 ADB922S LoRa;
+
 
 //================================
 //          Initialize Device Function
@@ -14,7 +30,7 @@ ADB922S LoRa;
 
 void start()
 {
-    ConsoleBegin(BPS_57600);  // DR0 to DR5
+    ConsoleBegin(BPS_57600);
     //DisableConsole();
     //DisableDebug();
 
@@ -24,7 +40,7 @@ void start()
     //pinMode(2, INPUT_PULLUP);
     //pinMode(3, INPUT_PULLUP); // For ADB922S, CUT the pin3 of the Sheild.
 
-    ConsolePrint(F("**** End-node_Sample *****\n"));
+    ConsolePrint(F("**** ADR_Sample *****\n"));
 
     /*  setup Power save Devices */
     //power_adc_disable();          // ADC converter
@@ -34,7 +50,7 @@ void start()
     //power_twi_disable();         // I2C
 
     /*  setup ADB922S  */
-    if ( LoRa.begin(BPS_19200) == false )
+    if ( LoRa.begin(BPS_19200, DR3) == false )     //  !!!!!!!   Set Default DR to DR3
     {
         while(true)
         {
@@ -45,8 +61,8 @@ void start()
         }
     }
 
-    /* Set DR3 */
-    LoRa.setDr(DR3);  // DR0 to DR5
+    /* Set ADR ON */
+    LoRa.setADRParams(3, 2);   // ADR_ACK_LIMIT, ADR_ACK_DELAY
 
     /*  join LoRaWAN */
     LoRa.join();
@@ -114,7 +130,24 @@ void task1(void)
     ConsolePrint(F("%%RH: %d %%\n"), humi);
     ConsolePrint(F("Pressure: %d Pa\n"), press);
 
-    LoRa.sendData(LoRa_Port_NORM, ECHO, F("%04X%04X%08X"), temp, humi, press);
+    int rc = LoRa.sendData(LoRa_Port_NORM, ECHO, F("%04X%04X%08X"), temp, humi, press);
+
+    if ( rc == LoRa_RC_DATA_TOO_LONG )
+    {
+        ConsolePrint(F("\n !!!DATA_TOO_LONG\n"));
+    }
+    else if ( rc == LORA_RC_NO_FREE_CH )
+    {
+        ConsolePrint(F("\n !!!No free CH\n"));
+    }
+    else if ( rc == LoRa_RC_BUSY )
+    {
+        ConsolePrint(F("\n !!!Busy\n"));
+    }
+    else if ( rc == LoRa_RC_ERROR )
+    {
+        ConsolePrint(F("\n !!!ERROR\n"));
+    }
 }
 
 /*-------------------------------------------------------------*/
@@ -131,7 +164,24 @@ void task2(void)
     pl.set_float(bme_humi);
     pl.set_float(bme_press);
 
-    LoRa.sendPayload(LoRa_Port_COMP, ECHO, &pl);
+    int rc = LoRa.sendPayloadConfirm(LoRa_Port_COMP, ECHO, &pl);
+
+    if ( rc == LoRa_RC_DATA_TOO_LONG )
+    {
+        ConsolePrint(F("\n !!!DATA_TOO_LONG\n"));
+    }
+    else if ( rc == LORA_RC_NO_FREE_CH )
+    {
+        ConsolePrint(F("\n !!!No free CH\n"));
+    }
+    else if ( rc == LoRa_RC_BUSY )
+    {
+        ConsolePrint(F("\n !!!Busy\n"));
+    }
+    else if ( rc == LoRa_RC_ERROR )
+    {
+        ConsolePrint(F("\n !!!ERROR\n"));
+    }
 }
 
 //===============================
@@ -140,8 +190,8 @@ void task2(void)
 //===============================
 
 TASK_LIST = {
-        TASK(task1, 0, 10),
-        TASK(task2, 8, 10),
+        TASK(task1, 0, 1),
+        TASK(task2, 15, 15),
         END_OF_TASK_LIST
 };
 
