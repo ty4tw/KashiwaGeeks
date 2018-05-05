@@ -37,14 +37,18 @@ namespace tomyApplication
 #define ADR_ACK_LIMIT     5
 #define ADR_ACK_DELAY   2
 
-#ifndef LoRaDebug
-#ifdef SHOW_LORA_TRANSACTION
+#ifdef LORA_DEBUG
 #define LoRaDebug(...)  DebugPrint( __VA_ARGS__)
 #define ECHOFLAG  true
 #else
 #define LoRaDebug(...)
 #define ECHOFLAG  false
 #endif
+
+#ifdef TEST_ADR
+#define ADRDebug(...)  DebugPrint( __VA_ARGS__)
+#else
+#define ADRDebug(...)
 #endif
 
 #define MAX_NO_FREE_CH_CNT  5
@@ -85,22 +89,26 @@ public:
     bool begin(uint32_t baudrate, LoRaDR dr = DR2, uint8_t retryTx = 1 );
     bool isConnect(void);
     bool join(void);
+
     int sendData(uint8_t port, bool echo, const __FlashStringHelper* format, ...);
-    int sendBinary(uint8_t port, bool echo, uint8_t* data, uint8_t dataLen);
-    int sendPayload(uint8_t port, bool echo, Payload* payload);
     int sendDataConfirm(uint8_t port, bool echo, const __FlashStringHelper* format, ...);
+    int sendPayload(uint8_t port, bool echo, Payload* payload);
     int sendPayloadConfirm(uint8_t port, bool echo, Payload* payload);
+
     uint8_t getDownLinkPort( void);
     Payload* getDownLinkPayload(void);
-    uint8_t getDownLinkBinaryData(uint8_t* data);
     String getDownLinkData(void);
     void checkDownLink(void);
+
     void sleep(void);
     void wakeup(void);
-    void getHwModel(char* model, uint8_t length);
+
+
     void getVersion(char* version, uint8_t length);
-    void getEUI(char* eui, uint8_t length);
     uint8_t getMaxPayloadSize(void);
+    void getEUI(char* eui, uint8_t length);     //  ADB922S ONLY
+    void getHwModel(char* model, uint8_t length);      //  ADB922S ONLY
+
     bool setTxRetryCount(uint8_t retry);
     uint8_t getTxRetryCount(void);
 
@@ -108,9 +116,11 @@ public:
     bool setADR(bool onOff);
     bool setADRParams(uint8_t adrAckLimit, uint8_t adrAckDelay);
     bool setLinkCheck(void);
-    bool saveConfig(void);
     int setConfig(void) {return 0;}
 
+    int reset(void);
+
+private:
     uint8_t getDr(void);
     uint8_t getPwr(void);
     bool isAdrOn(void);
@@ -119,9 +129,9 @@ public:
     int getDcBand(CHID bandId);
     uint16_t getUpcnt(void);
     uint16_t getDowncnt(void);
-    int reset(void);
-
-private:
+    bool saveConfig(void);
+    int sendBinary(uint8_t port, bool echo, uint8_t* data, uint8_t dataLen);
+    uint8_t getDownLinkBinaryData(uint8_t* data);
     void clearCmd(void);
     int  checkBaudrate(uint32_t baudrate);
     bool connect(bool reconnect);

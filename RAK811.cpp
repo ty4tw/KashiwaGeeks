@@ -23,7 +23,9 @@ extern PortList_t thePortList[];
 //
 
 RAK811::RAK811(void):
-        _baudrate{9600}, _joinStatus{not_joined}, _txTimeoutValue{ LoRa_RECEIVE_DELAY2_RAK}, _stat{0}, _txFlg{false}
+        _baudrate{9600}, _joinStatus{not_joined}, _txTimeoutValue{ LoRa_RECEIVE_DELAY2_RAK}, _stat{0},
+        _txOn{false}, _minDR{DR2},  _minDROn{false}, _adrAckCnt{0}, _adrReqBitOn{false},
+        _adrAckDelay{ADR_ACK_DELAY}, _adrAckLimit{ADR_ACK_LIMIT}, _noFreeChCnt{0}
 {
     _serialPort = &Serial;
     _maxPayloadSize = LoRa_DEFAULT_PAYLOAD_SIZE;
@@ -35,11 +37,12 @@ RAK811::~RAK811(void)
 }
 
 
-bool RAK811::begin(uint32_t baudrate)
+bool RAK811::begin(uint32_t baudrate, LoRaDR dr)
 {
     _baudrate = baudrate;
     uint32_t  br[] = { 9600, 19200, 57600, 115200};
     String param = (String)baudrate + F(",8,0,1,0");
+    _minDR = dr;
 
     for ( uint8_t i = 0; i < 4; i++ )
     {
@@ -336,7 +339,7 @@ int RAK811::transmitBinaryData(bool echo, uint8_t port, bool confirm, uint8_t* b
         }
     }
 exit:
-    _txFlg = false;
+    _txOn = false;
      return _stat;
  }
 
@@ -401,10 +404,35 @@ uint8_t RAK811::ctoh(uint8_t ch)
     return 0;
 }
 
+void RAK811::checkRecvData(char* buff, bool conf)
+{
+      // ToDo
+    if ( _stat == LoRa_RC_SUCCESS )
+        {
+            if ( conf )
+            {
+                _adrAckCnt = 0;
+                _minDROn = false;
+            }
+            else
+            {
+                _adrAckCnt++;
+            }
+
+            if ( strncmp(buff, "rx", 2) == 0 )
+            {
+              //  _downLinkData = String(buff + 3);  ToDo
+               _txOn= true;
+               return;
+            }
+        }
+        //_downLinkData = F("");  ToTo:
+        _txOn = false;
+}
 
 void RAK811::checkDownLink(void)
 {
-    if ( _stat == LoRa_RC_SUCCESS && _txFlg == true )
+    if ( _stat == LoRa_RC_SUCCESS && _txOn == true )
     {
         uint8_t port = getDownLinkPort();
         if ( port )
@@ -419,9 +447,96 @@ void RAK811::checkDownLink(void)
             }
         }
     }
-    _txFlg = false;
+    _txOn = false;
 }
 
+void RAK811::controlADR(void)
+{
+    ADRDebug(F(" \n-----ADR Info-----\nADR_ACK_CNT=%d\n"), _adrAckCnt);
+
+    if ( _adrOn  && _adrAckCnt >= _adrAckLimit )
+    {
+        _adrReqBitOn = true;
+
+        if ( _adrAckCnt  < _adrAckLimit + _adrAckDelay )
+       {
+            _maxPwrOn = false;
+       }
+
+        if ( _adrAckCnt >= _adrAckLimit )
+        {
+            _adrReqBitOn = true;
+        }
+
+set_DR_Lower:
+        if ( (_adrAckCnt == _adrAckLimit + 5 * _adrAckDelay  && !_minDROn) ||
+              (_adrAckCnt == _adrAckLimit + 4 * _adrAckDelay  && !_minDROn) ||
+              (_adrAckCnt == _adrAckLimit + 3 * _adrAckDelay  && !_minDROn) ||
+              (_adrAckCnt == _adrAckLimit + 2 * _adrAckDelay  && !_minDROn)  )
+        {
+            _minDROn = setLowerDr();
+            if ( _minDROn )
+            {
+                _finalDelay = 0;
+            }
+        }
+
+        if ( _minDROn )
+        {
+            if ( _finalDelay < _adrAckDelay )
+            {
+                _finalDelay++;
+            }
+            else
+            {
+                ADRDebug(F("All ch enabled\n"));
+
+                if ( _adrReqBitOn )
+                {
+                    for ( uint8_t ch = 0; ch < 16; ch++ )    //  How to know chs to be enabled. ( 8ch or 16ch )
+                    {
+                        // setChStat(ch, true);    ToDo:   uncomment
+                    }
+                }
+                _adrReqBitOn = false;
+            }
+        }
+
+        if ( _adrAckCnt == _adrAckLimit + _adrAckDelay  && !_maxPwrOn)
+        {
+            if ( getPwr() == 0 )
+            {
+                ADRDebug(F("Power is max\n"));
+                _adrAckCnt += _adrAckDelay;
+                _maxPwrOn = true;
+                goto set_DR_Lower;
+            }
+            else
+            {
+                ADRDebug(F("SetMaxPwr Dummy\n"));
+                //_maxPwrOn = setMaxPower();    ToDo: uncomment
+            }
+        }
+
+        if ( _adrReqBitOn )
+        {
+            ADRDebug(F("Set ADRReqBit ON\n"));
+            setADRReqBit();  // ToDo:
+        }
+    }
+    ADRDebug(F("------------------\n"));
+}
+
+
+bool RAK811::setLinkCheck(void)
+{
+    return true;  // ToDo
+}
+
+int reset(void)
+{
+    return sendCommand(ECHOFLAG, F("reset"), F("0"));
+}
 
 //
 //
@@ -452,7 +567,7 @@ int RAK811::getLinkCount(uint16_t* upCnt, uint16_t* dwnCnt)
     return LoRa_RC_ERROR;
 }
 
-String RAK811:: get_config(String key)
+String RAK811:: getConfig(String key)
 {
     sendCommand(ECHOFLAG, F("get_config"), key);
     return _resp;
@@ -461,6 +576,23 @@ String RAK811:: get_config(String key)
 uint8_t RAK811::getMaxPayloadSize(void)
 {
     return _maxPayloadSize;
+}
+
+
+uint8_t RAK811::getDr(void)
+{
+    // ToDo
+    String key = F("dr");
+    String dr = getConfig(key);
+    return stoi(dr);
+}
+
+uint8_t RAK811::getPwr(void)
+{
+    // ToDo
+    String key = F("pwr_level");
+    String pwr = getConfig(key);
+    return stoi(pwr);
 }
 
 //
@@ -480,6 +612,13 @@ int RAK811::setADR(bool flg)
         param += String("off");
     }
     return setConfig(param);
+}
+
+bool RAK811::setADRParams(uint8_t limit, uint8_t delay)
+{
+    _adrAckLimit = limit;
+    _adrAckDelay = delay;
+    setADR(true);
 }
 
 int RAK811::setDr(LoRaDR dr)
@@ -502,5 +641,44 @@ int RAK811::setLinkCount(uint16_t upCnt, uint16_t dwnCnt)
 int RAK811::setConfig(String param)
 {
     return sendCommand(ECHOFLAG, F("set_config"), param, LoRa_INIT_WAIT_TIME_RAK);
+}
+
+void RAK811::setADRReqBit(void)
+{
+        // ToDo:   command
+}
+
+bool RAK811::setLowerDr(void )
+{
+    uint8_t dr = getDr();
+
+    if (dr <= (uint8_t) _minDR )
+    {
+        LoRaDebug(F(" DR is min %d\n"),dr);
+        return true;
+    }
+    else
+    {
+        setDr((LoRaDR)--dr);
+        LoRaDebug(F(" Set DR=%d\n"), dr);
+        return false;
+    }
+}
+
+bool RAK811::setMaxPower(void)
+{
+    char  cmd[20];
+    sprintf(cmd, "lorawan set_power 5");
+    // ToDo:
+    //if ( send(cmd, F("Ok"), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME) == 0 )
+    //{
+   //     return true;
+    //}
+    _maxPwrOn = false;
+}
+
+bool RAK811::setChStat(uint8_t ch, bool stat)    // ToDo
+{
+    return true;
 }
 

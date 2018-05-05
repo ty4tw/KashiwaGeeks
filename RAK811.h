@@ -51,7 +51,9 @@ extern tomyApplication::SerialLog* theLog;
 #define LoRa_RC_SUCCESS            0
 #define LoRa_RC_DATA_TOO_LONG     -1
 #define LoRa_RC_NOT_JOINED        -2
-#define LoRa_RC_ERROR             -3
+#define LORA_RC_NO_FREE_CH   -3
+#define LoRa_RC_BUSY    -4
+#define LoRa_RC_ERROR    -5
 
 // Timeout values
 #define LoRa_INIT_WAIT_TIME_RAK      2000
@@ -60,20 +62,31 @@ extern tomyApplication::SerialLog* theLog;
 #define JOIN__WAIT_TIME_RAK         30000
 
 // Debug log
-#ifndef LoRaDebug
-#ifdef SHOW_LORA_TRANSACTION
+#ifdef LORA_DEBUG
 #define LoRaDebug(...)  DebugPrint( __VA_ARGS__)
 #define ECHOFLAG  true
 #else
 #define LoRaDebug(...)
 #define ECHOFLAG  false
 #endif
+
+#ifdef TEST_ADR
+#define ADRDebug(...)  DebugPrint( __VA_ARGS__)
+#else
+#define ADRDebug(...)
 #endif
+
+#define MAX_NO_FREE_CH_CNT  5
 
 #ifndef PORT_LIST
 #define PORT_LIST   PortList_t  thePortList[]
 #define PORT(...)         {__VA_ARGS__}
 #define END_OF_PORT_LIST  {0, 0}
+
+
+#define ADR_ACK_LIMIT     5
+#define ADR_ACK_DELAY   2
+
 
 typedef enum
 {
@@ -108,7 +121,7 @@ public:
     RAK811(void);
     ~RAK811(void);
 
-    bool begin(uint32_t baudrate = 9600);
+    bool begin(uint32_t baudrate = 9600, LoRaDR dr = DR2);
     bool isConnect(void);
     bool join(void);
 
@@ -126,16 +139,21 @@ public:
     void wakeup(void);
 
     String getVersion(void);
-    String get_config(String key);
-    int getLinkCount(uint16_t* upCnt, uint16_t* dwnCnt);
     uint8_t getMaxPayloadSize(void);
+
     int setDr(LoRaDR dr);
     int setADR(bool flg);
-    int setConfig(String param);
-    int setLinkCount(uint16_t upCnt, uint16_t dwnCnt);
+    bool setADRParams(uint8_t adrAckLimit, uint8_t adrAckDelay);
+    bool setLinkCheck(void);     // ToDo:
 
+    int reset(void);
 
 private:
+    int setConfig(String param);
+    String getConfig(String key);     // RAK811 ONLY
+    uint8_t getPwr(void);
+    int getLinkCount(uint16_t* upCnt, uint16_t* dwnCnt);
+    int setLinkCount(uint16_t upCnt, uint16_t dwnCnt);
     bool isConnected(void);
     int transmitString(bool echo, uint8_t port, bool confirm, const __FlashStringHelper* format, va_list args);
     int transmitBinaryData(bool echo,  uint8_t port, bool confirm, uint8_t* data, uint8_t dataLen);
@@ -147,6 +165,14 @@ private:
     uint8_t getDownLinkBinaryData(uint8_t* data);
     uint8_t ctoh(uint8_t ch);
 
+    uint8_t getDr(void);
+    void checkRecvData(char* buff, bool conf); // ToDo:
+    void controlADR(void);
+    void setADRReqBit(void);
+    bool setMaxPower(void);  // ToDo
+    bool setLowerDr(void);
+    bool setChStat(uint8_t ch, bool stat);  // ToDo
+
     HardwareSerial*  _serialPort;
     uint32_t  _baudrate;
     JoineStatus  _joinStatus;
@@ -155,7 +181,17 @@ private:
     String  _resp;
     Payload _payload;
     int  _stat;
-    bool   _txFlg;
+    bool _txOn;
+    bool _adrOn;
+    bool _adrReqBitOn;
+    bool _maxPwrOn;
+    LoRaDR _minDR;
+    bool _minDROn;
+    uint16_t _adrAckCnt;
+    uint8_t _adrAckLimit;
+    uint8_t _adrAckDelay;
+    uint8_t _finalDelay;
+    uint8_t _noFreeChCnt;
 };
 
 }

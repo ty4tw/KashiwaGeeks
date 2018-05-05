@@ -30,7 +30,11 @@ using namespace tomyApplication;
  ======================================*/
 uint32_t theAlarmTime = 0;
 uint8_t theWDTCSR = WDT_VAL_8S;
+#ifdef TEST_ADR
+uint8_t theWdtSecs = 30;
+#else
 uint8_t theWdtSecs = 8;
+#endif
 volatile uint32_t theTimeCount;
 volatile uint32_t theUTC = 0;
 volatile INT_stat_t theIntStat = INT_INIT;

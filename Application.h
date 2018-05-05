@@ -47,7 +47,20 @@ namespace tomyApplication
 
 #define LOG_BUF_LEN 128
 
+/*
+ *    Debug define
+ */
+
 //#define SHOW_TASK_LIST
+//#define LORA_DEBUG
+
+/*
+ *    Sleep mode define
+ */
+
+#define SLEEP_MODE   SLEEP_MODE_PWR_DOWN
+//#define SLEEP_MODE   SLEEP_MODE_STANDBY
+//#define SLEEP_MODE   SLEEP_MODE_PWR_SAVE
 
 /*======================================
  MACROs for the Appication

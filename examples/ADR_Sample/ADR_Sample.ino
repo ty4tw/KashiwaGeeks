@@ -2,14 +2,12 @@
  *
  *            I M P O R T A N T    N O T I C E
  *
- * 1. Uncomment the line17 of AppDefine.h in the library
- * 2. Change the line 33 of Application.cpp as follows
+ *    Uncomment the line17 of AppDefine.h in the library
+ *    Before compling to see a detail log of this sketch.
  *
- *     uint8_t theWdtSecs = 8;    ==>  uint8_t theWdtSecs = 30;
+ *    This change helps you to see what's going on in a short time.
  *
- * Before compling to see a detail log of this sketch.
- *
- * Those changes help you to see what's going on in a short time.
+ *          !!!!! DO NOT FORGET TO  PUT IT BACK !!!!!
  *
  ****************************************************************/
 
@@ -144,10 +142,14 @@ void task1(void)
     {
         ConsolePrint(F("\n !!!Busy\n"));
     }
-    else if ( rc == LoRa_RC_ERROR )
+    else if ( rc == LoRa_RC_NOT_JOINED )
     {
-        ConsolePrint(F("\n !!!ERROR\n"));
+        ConsolePrint(F("\n !!!Not Joined\n"));
     }
+    else if ( rc == LoRa_RC_ERROR )
+   {
+       ConsolePrint(F("\n !!!UNSUCCESS\n"));
+   }
 }
 
 /*-------------------------------------------------------------*/
@@ -178,10 +180,14 @@ void task2(void)
     {
         ConsolePrint(F("\n !!!Busy\n"));
     }
-    else if ( rc == LoRa_RC_ERROR )
+    else if ( rc == LoRa_RC_NOT_JOINED )
     {
-        ConsolePrint(F("\n !!!ERROR\n"));
+        ConsolePrint(F("\n !!!Not Joined\n"));
     }
+    else if ( rc == LoRa_RC_ERROR )
+   {
+       ConsolePrint(F("\n !!!UNSUCCESS\n"));
+   }
 }
 
 //===============================

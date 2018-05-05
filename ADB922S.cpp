@@ -27,7 +27,8 @@ const char* loraTxConfirmCmd = "lorawan tx cnf";
 //
 
 ADB922S::ADB922S(void):
-        _baudrate{9600}, _joinStatus{not_joined}, _txTimeoutValue{LoRa_RECEIVE_DELAY2}, _stat{0}, _txOn{false}, _minDR{DR2},  _minDROn{false}, _adrAckCnt{0}, _adrReqBitOn{false}, _adrAckDelay{ADR_ACK_DELAY}, _adrAckLimit{ADR_ACK_LIMIT}, _noFreeChCnt{0}
+        _baudrate{9600}, _joinStatus{not_joined}, _txTimeoutValue{LoRa_RECEIVE_DELAY2}, _stat{0}, _txOn{false}, _minDR{DR2},
+        _minDROn{false}, _adrAckCnt{0}, _adrReqBitOn{false}, _adrAckDelay{ADR_ACK_DELAY}, _adrAckLimit{ADR_ACK_LIMIT}, _noFreeChCnt{0}
 {
     _serialPort = new SoftwareSerial(LoRa_Rx_PIN, LoRa_Tx_PIN);
     _txRetryCount = 1;
@@ -330,7 +331,7 @@ int ADB922S::send(String cmd, String resp1, String resp2 , bool echo, uint32_t t
        }
        else
        {
-            //_noFreeChCnt++;
+           _noFreeChCnt++;
             rc = LORA_RC_NO_FREE_CH;
        }
     }
@@ -540,9 +541,10 @@ void ADB922S::checkRecvData(char* buff, bool conf)
 
 void ADB922S::controlADR(void)
 {
+    ADRDebug(F(" \n-----ADR Info-----\nADR_ACK_CNT=%d\n"), _adrAckCnt);
+
     if ( _adrOn  && _adrAckCnt >= _adrAckLimit )
     {
-        LoRaDebug(F(" \n-----ADR Info-----\nADR_ACK_CNT=%d\n"), _adrAckCnt);
         _adrReqBitOn = true;
 
         if ( _adrAckCnt  < _adrAckLimit + _adrAckDelay )
@@ -576,7 +578,7 @@ set_DR_Lower:
             }
             else
             {
-                LoRaDebug(F("All ch enabled\n"));
+                ADRDebug(F("All ch enabled\n"));
 
                 if ( _adrReqBitOn )
                 {
@@ -593,25 +595,25 @@ set_DR_Lower:
         {
             if ( getPwr() == 0 )
             {
-                LoRaDebug(F("Power is max\n"));
+                ADRDebug(F("Power is max\n"));
                 _adrAckCnt += _adrAckDelay;
                 _maxPwrOn = true;
                 goto set_DR_Lower;
             }
             else
             {
-                LoRaDebug(F("SetMaxPwr Dummy\n"));
+                ADRDebug(F("SetMaxPwr Dummy\n"));
                 //_maxPwrOn = setMaxPower();    ToDo: uncomment
             }
         }
 
         if ( _adrReqBitOn )
         {
-            LoRaDebug(F("Set ADRReqBit ON\n"));
+            ADRDebug(F("Set ADRReqBit ON\n"));
             setADRReqBit();  // ToDo:
         }
-        LoRaDebug(F("------------------\n"));
     }
+    ADRDebug(F("------------------\n"));
 }
 
 Payload* ADB922S::getDownLinkPayload(void)
