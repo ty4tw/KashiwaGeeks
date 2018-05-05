@@ -287,8 +287,29 @@ int ADB922S::send(String cmd, String resp1, String resp2 , bool echo, uint32_t t
     {
         int idx1 = 0;
         int idx2 = 0;
+        int idx3 = 0;
+
         if ( ( idx1 = resp.indexOf(F(">>"))) > 0 )
         {
+            // check LinkCheck Response because it's longer than payloadLen.
+            if ( (idx2 = resp.indexOf(F("DemodMargin") )) > 0 )
+            {
+                if ( (idx3 = resp.indexOf(F("NbGateways"))) > 0 )
+                {
+                    _margin = (uint8_t)resp.substring( idx2 + 13, idx3 - 3).toInt();
+                    if ( (idx2 = resp.indexOf(F(">>"), idx3)) > idx3 )
+                    {
+                        _nbGw = (uint8_t)resp.substring( idx3 + 12, idx2 - 2).toInt();
+                    }
+                }
+                LoRaDebug(F("MARGIN %d GW %d\n"), _margin, _nbGw);
+
+                //  clear ADR_ACK_CNT
+                _adrAckCnt = 0;
+                _minDROn = false;
+                return LoRa_RC_SUCCESS;
+            }
+
             if (  (idx2 = resp.indexOf(F(">>"), idx1 + 2)) > idx1 )
             {
                 idx1 = idx2;
@@ -306,7 +327,6 @@ int ADB922S::send(String cmd, String resp1, String resp2 , bool echo, uint32_t t
 
     if ( resp1 == ""  && resp2 == "" )
     {
-        //return LoRa_RC_SUCCESS;
         rc = LoRa_RC_SUCCESS;
     }
     else if (resp.indexOf(resp1) >= 0 ||  ( resp2 != "" && resp.indexOf(resp2) >= 0 ))
@@ -314,6 +334,8 @@ int ADB922S::send(String cmd, String resp1, String resp2 , bool echo, uint32_t t
         LoRaDebug(F(" Send success\n"));
         _noFreeChCnt = 0;
         rc = LoRa_RC_SUCCESS;
+
+
     }
     else if (resp.indexOf(F("not_joined")) >= 0 )
     {
@@ -528,7 +550,17 @@ void ADB922S::checkRecvData(char* buff, bool conf)
         }
         else
         {
-            _adrAckCnt++;
+            if ( strncmp(buff, "DemodMargin =", 13 ) == 0)
+           {
+                _adrAckCnt = 0;
+                _minDROn = false;
+                // ToDo    get margin & nbGW
+                DebugPrint("DEMO found\n");
+           }
+            else
+            {
+                _adrAckCnt++;
+            }
         }
 
         if ( strncmp(buff, "rx", 2) == 0 )
@@ -762,6 +794,7 @@ bool ADB922S::setChStat(uint8_t ch, bool onOff)
 
 bool ADB922S::setLinkCheck(void)
 {
+    _margin = _nbGw = 0;
     if ( send(F("lorawan set_linkchk"), F("Ok"), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME) == 0 )
     {
         return true;
@@ -791,6 +824,16 @@ uint8_t ADB922S::getPwr(void)
      send( F("lorawan get_pwr"), F(""), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME, pwr, 2);
      return (uint8_t) atoi(pwr);
 }
+
+uint8_t ADB922S::getMargin(void)
+{
+    return _margin;
+}
+
+ uint8_t ADB922S::getNbGw(void)
+ {
+     return _nbGw;
+ }
 
 bool ADB922S::isAdrOn(void)
 {

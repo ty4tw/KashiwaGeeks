@@ -147,6 +147,8 @@ private:
     bool setMaxPower(void);
     bool setLowerDr(void);
     bool setChStat(uint8_t ch, bool stat);
+    uint8_t getMargin(void);
+    uint8_t getNbGw(void);
 
     SoftwareSerial*  _serialPort;
     uint32_t  _baudrate;
