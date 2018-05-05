@@ -3,15 +3,8 @@
 #include "KGPS.h"
 
 #define ECHO false
-#define ADB        //  comment out this line for RAK811
 
-#ifdef ADB
 ADB922S LoRa;
-#define RAK_CONFIG
-#else
-RAK811 LoRa;
-#define RAK_CONFIG "dev_eui:xxxx&app_eui:xxxx&app_key:xxxx"
-#endif
 
 KGPS gps;
 uint8_t portGPS = 12;
@@ -31,11 +24,7 @@ uint8_t portTemp = 13;
 void start()
 {
     /*  Setup console */
-#ifdef ADB
     ConsoleBegin(BPS_57600);
-#else
-    ConsoleBegin(BPS_19200, CONSOLE_Rx_PIN, CONSOLE_Tx_PIN);
-#endif
 
     //DisableDebug();
 
@@ -60,7 +49,6 @@ void start()
             delay(300);
         }
     }
-    LoRa.setConfig(RAK_CONFIG);
 
     /* setup the GPS */
     gps.begin(9600, 8, 9);
