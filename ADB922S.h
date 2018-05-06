@@ -24,12 +24,12 @@ namespace tomyApplication
 #define LoRa_RECEIVE_DELAY2      5000
 #define JOIN__WAIT_TIME         30000
 
-#define LoRa_RC_SUCCESS            0
-#define LoRa_RC_DATA_TOO_LONG     -1
-#define LoRa_RC_NOT_JOINED        -2
+#define LORA_RC_SUCCESS            0
+#define LORA_RC_DATA_TOO_LONG     -1
+#define LORA_RC_NOT_JOINED        -2
 #define LORA_RC_NO_FREE_CH   -3
-#define LoRa_RC_BUSY    -4
-#define LoRa_RC_ERROR             -5
+#define LORA_RC_BUSY    -4
+#define LORA_RC_ERROR             -5
 #define LoRa_Rx_PIN               11
 #define LoRa_Tx_PIN               12
 #define LoRa_WAKEUP_PIN            7
@@ -87,8 +87,8 @@ public:
     ~ADB922S(void);
 
     bool begin(uint32_t baudrate, LoRaDR dr = DR2, uint8_t retryTx = 1 );
-    bool isConnect(void);
     bool join(void);
+    bool isJoin(void);
 
     int sendData(uint8_t port, bool echo, const __FlashStringHelper* format, ...);
     int sendDataConfirm(uint8_t port, bool echo, const __FlashStringHelper* format, ...);
@@ -100,25 +100,23 @@ public:
     String getDownLinkData(void);
     void checkDownLink(void);
 
-    void sleep(void);
-    void wakeup(void);
-
+    int setDr(LoRaDR dr);
+    bool setADR(bool onOff);
+    bool setADRParams(uint8_t adrAckLimit, uint8_t adrAckDelay);
+    bool setLinkCheck(void);
+    bool setTxRetryCount(uint8_t retry);
 
     void getVersion(char* version, uint8_t length);
     uint8_t getMaxPayloadSize(void);
     void getEUI(char* eui, uint8_t length);     //  ADB922S ONLY
     void getHwModel(char* model, uint8_t length);      //  ADB922S ONLY
-
-    bool setTxRetryCount(uint8_t retry);
     uint8_t getTxRetryCount(void);
-
-    int setDr(LoRaDR dr);
-    bool setADR(bool onOff);
-    bool setADRParams(uint8_t adrAckLimit, uint8_t adrAckDelay);
-    bool setLinkCheck(void);
-    int setConfig(void) {return 0;}
+    uint8_t getMargin(void);
+    uint8_t getNbGw(void);
 
     int reset(void);
+    void sleep(void);
+    void wakeup(void);
 
 private:
     uint8_t getDr(void);
@@ -147,8 +145,6 @@ private:
     bool setMaxPower(void);
     bool setLowerDr(void);
     bool setChStat(uint8_t ch, bool stat);
-    uint8_t getMargin(void);
-    uint8_t getNbGw(void);
 
     SoftwareSerial*  _serialPort;
     uint32_t  _baudrate;
@@ -172,6 +168,7 @@ private:
     uint8_t _noFreeChCnt;
     uint8_t _nbGw;
     uint8_t _margin;
+    uint16_t _chStat;
 };
 
 }

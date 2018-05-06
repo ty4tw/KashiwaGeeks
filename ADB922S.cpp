@@ -29,7 +29,7 @@ const char* loraTxConfirmCmd = "lorawan tx cnf";
 ADB922S::ADB922S(void):
         _baudrate{9600}, _joinStatus{not_joined}, _txTimeoutValue{LoRa_RECEIVE_DELAY2}, _stat{0}, _txOn{false}, _minDR{DR2},
         _minDROn{false}, _adrAckCnt{0}, _adrReqBitOn{false}, _adrAckDelay{ADR_ACK_DELAY}, _adrAckLimit{ADR_ACK_LIMIT}, _noFreeChCnt{0},
-        _nbGw{0}, _margin{0}
+        _nbGw{0}, _margin{0}, _chStat{0}
 {
     _serialPort = new SoftwareSerial(LoRa_Rx_PIN, LoRa_Tx_PIN);
     _txRetryCount = 1;
@@ -68,7 +68,7 @@ bool ADB922S::begin(uint32_t baudrate, LoRaDR dr, uint8_t txRetry )
                    sprintf(cmd, fmt.c_str(),  baudrate);
                    send(cmd, F(""),F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME);
                    _serialPort->begin(_baudrate);
-                   if (send(F("mod set_echo off"), F("Ok"),F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME) != LoRa_RC_SUCCESS )
+                   if (send(F("mod set_echo off"), F("Ok"),F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME) != LORA_RC_SUCCESS )
                    {
                        return false;
                    }
@@ -89,7 +89,7 @@ bool ADB922S::begin(uint32_t baudrate, LoRaDR dr, uint8_t txRetry )
 success_exit:
     setDr(dr);
     setTxRetryCount(_txRetryCount);
-    if ( send(F("mod save"), F("Ok"), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME) == LoRa_RC_SUCCESS )
+    if ( send(F("mod save"), F("Ok"), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME) == LORA_RC_SUCCESS )
     {
           return true;
      }
@@ -157,14 +157,27 @@ void ADB922S::wakeup(void)
     clearCmd();
 }
 
-bool ADB922S::isConnect(void)
+bool ADB922S::isJoin(void)
 {
     return connect(false);
 }
 
 bool ADB922S::join(void)
 {
-    return connect(true);
+    if ( connect(true) )
+    {
+        _chStat = 0;
+        for ( uint8_t i = 0; i < 16; i++ )
+        {
+            _chStat = _chStat << 1;
+            if ( getChStat(i) )
+            {
+               _chStat |= 0x00001;
+            }
+        }
+        return true;
+    }
+    return false;
 }
 
 bool ADB922S::connect(bool reconnect)
@@ -177,7 +190,7 @@ bool ADB922S::connect(bool reconnect)
     if(!reconnect)
     {
         rc = send(F("lorawan get_join_status"), F("joined"),F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME);
-        if ( rc == LoRa_RC_SUCCESS )
+        if ( rc == LORA_RC_SUCCESS )
         {
             _joinStatus = joined;
             return true;
@@ -188,10 +201,9 @@ bool ADB922S::connect(bool reconnect)
     //
     // LoRa module join to Network Server by OTAA
     //
-    if ( send(F("lorawan join otaa"), F("accepted"), F(""), ECHOFLAG, JOIN__WAIT_TIME )  != LoRa_RC_SUCCESS )
+    if ( send(F("lorawan join otaa"), F("accepted"), F(""), ECHOFLAG, JOIN__WAIT_TIME )  != LORA_RC_SUCCESS )
     {
         _joinStatus = not_joined;
-            ConsolePrint(F("!!! Connect Fail, Not joined\n"));
         return false;
     }
 
@@ -302,12 +314,11 @@ int ADB922S::send(String cmd, String resp1, String resp2 , bool echo, uint32_t t
                         _nbGw = (uint8_t)resp.substring( idx3 + 12, idx2 - 2).toInt();
                     }
                 }
-                LoRaDebug(F("MARGIN %d GW %d\n"), _margin, _nbGw);
 
                 //  set  ADR_ACK_CNT  (-1)
                 _adrAckCnt = 65535;    // (uint16_t ) 65535  = (int ) -1
                 _minDROn = false;
-                return LoRa_RC_SUCCESS;
+                return LORA_RC_SUCCESS;
             }
 
             if (  (idx2 = resp.indexOf(F(">>"), idx1 + 2)) > idx1 )
@@ -327,13 +338,13 @@ int ADB922S::send(String cmd, String resp1, String resp2 , bool echo, uint32_t t
 
     if ( resp1 == ""  && resp2 == "" )
     {
-        rc = LoRa_RC_SUCCESS;
+        rc = LORA_RC_SUCCESS;
     }
     else if (resp.indexOf(resp1) >= 0 ||  ( resp2 != "" && resp.indexOf(resp2) >= 0 ))
     {
         LoRaDebug(F(" Send success\n"));
         _noFreeChCnt = 0;
-        rc = LoRa_RC_SUCCESS;
+        rc = LORA_RC_SUCCESS;
 
 
     }
@@ -341,7 +352,7 @@ int ADB922S::send(String cmd, String resp1, String resp2 , bool echo, uint32_t t
     {
         LoRaDebug(F(" Not Joined. \n"));
         _joinStatus = not_joined;
-        rc = LoRa_RC_NOT_JOINED;
+        rc = LORA_RC_NOT_JOINED;
     }
     else if (resp.indexOf(F("no_free_ch")) >= 0 )
     {
@@ -352,7 +363,7 @@ int ADB922S::send(String cmd, String resp1, String resp2 , bool echo, uint32_t t
            LoRaDebug(F(" Reset\n"));
            _joinStatus = not_joined;
            _noFreeChCnt = 0;
-           rc = LoRa_RC_NOT_JOINED;
+           rc = LORA_RC_NOT_JOINED;
        }
        else
        {
@@ -363,16 +374,16 @@ int ADB922S::send(String cmd, String resp1, String resp2 , bool echo, uint32_t t
     else if (resp.indexOf(F("invalid_data_length")) >= 0 )
     {
         LoRaDebug(F(" Data too long.\n"));
-        rc = LoRa_RC_DATA_TOO_LONG;
+        rc = LORA_RC_DATA_TOO_LONG;
     }
     else if (resp.indexOf(F("busy")) >= 0 )
     {
         LoRaDebug(F(" Busy\n"));
-        rc = LoRa_RC_BUSY;
+        rc = LORA_RC_BUSY;
     }
     else
     {
-        rc = LoRa_RC_ERROR;
+        rc = LORA_RC_ERROR;
     }
 #ifdef FREE_MEMORY_CHECK
     ConsolePrint(F("Free RAM is %d bytes\n"), getFreeMemory());
@@ -439,10 +450,10 @@ int ADB922S::transmitString(uint8_t port, bool echo, bool confirm, const __Flash
 
     if ( _joinStatus == not_joined )
     {
-        LoRaDebug(F("Module is not joined.  try to join first.\n"));
+        LoRaDebug(F("Module is not joined.  try to join.\n"));
         if ( !join() )
         {
-            _stat = LoRa_RC_NOT_JOINED;
+            _stat = LORA_RC_NOT_JOINED;
             goto exit;
         }
     }
@@ -469,7 +480,7 @@ int ADB922S::transmitString(uint8_t port, bool echo, bool confirm, const __Flash
     if (  strlen(data) >= (size_t)(22 + _maxPayloadSize) )
     {
         LoRaDebug(F("Error: Data is too long.\n"));
-        _stat = LoRa_RC_DATA_TOO_LONG;
+        _stat = LORA_RC_DATA_TOO_LONG;
         goto exit;
     }
 
@@ -491,10 +502,10 @@ int ADB922S::transmitBinaryData(uint8_t port, bool echo, bool confirm, uint8_t* 
 
     if ( _joinStatus == not_joined )
     {
-        LoRaDebug(F("Module is not joined.  try to join first.\n"));
+        LoRaDebug(F("Module is not joined.  try to join.\n"));
         if ( !join() )
         {
-            _stat = LoRa_RC_NOT_JOINED;
+            _stat = LORA_RC_NOT_JOINED;
             goto exit;
         }
     }
@@ -507,7 +518,7 @@ int ADB922S::transmitBinaryData(uint8_t port, bool echo, bool confirm, uint8_t* 
     if ( dataLen > _maxPayloadSize )
     {
         LoRaDebug(F("Error: Data %d is too long.\n"), dataLen);
-        _stat = LoRa_RC_DATA_TOO_LONG;
+        _stat = LORA_RC_DATA_TOO_LONG;
         goto exit;
     }
 
@@ -541,7 +552,7 @@ exit:
 
 void ADB922S::checkRecvData(char* buff, bool conf)
 {
-    if ( _stat == LoRa_RC_SUCCESS )
+    if ( _stat == LORA_RC_SUCCESS )
     {
         if ( conf )
         {
@@ -554,8 +565,6 @@ void ADB922S::checkRecvData(char* buff, bool conf)
            {
                 _adrAckCnt = 0;
                 _minDROn = false;
-                // ToDo    get margin & nbGW
-                DebugPrint("DEMO found\n");
            }
             else
             {
@@ -613,13 +622,18 @@ set_DR_Lower:
             }
             else
             {
-                ADRDebug(F("All ch enabled\n"));
+                ADRDebug(F("Enable Channels\n"));
 
-                if ( _adrReqBitOn )
+                if ( _adrReqBitOn && _finalDelay == _adrAckDelay )
                 {
-                    for ( uint8_t ch = 0; ch < 16; ch++ )    //  How to know chs to be enabled. ( 8ch or 16ch )
+                    _finalDelay++;
+                    uint16_t stats = _chStat;
+                    for ( uint8_t  ch  = 0; ch < 16; ch++ )
                     {
-                        // setChStat(ch, true);    ToDo:   uncomment
+                        bool  chs = stats & 0x0001;
+                        stats = stats >> 1;
+                        ADRDebug(F("Ch%02d:%s\n"), 15 - ch, (chs ? "ON": "OFF"));
+                        //setChStat(15 - ch, chs);   // ToDo:   uncomment
                     }
                 }
                 _adrReqBitOn = false;
@@ -648,7 +662,7 @@ set_DR_Lower:
             setADRReqBit();  // ToDo:
         }
     }
-    ADRDebug(F("------------------\n"));
+    ADRDebug(F("-------------------\n"));
 }
 
 Payload* ADB922S::getDownLinkPayload(void)
@@ -899,7 +913,7 @@ uint16_t ADB922S::getDowncnt(void)
 
 void ADB922S::checkDownLink(void)
 {
-    if ( _stat == LoRa_RC_SUCCESS && _txOn == true )
+    if ( _stat == LORA_RC_SUCCESS && _txOn == true )
     {
         uint8_t port = getDownLinkPort();
         if ( port )
@@ -921,3 +935,7 @@ int ADB922S::reset(void)
 {
     return send(F("mod reset"), F("TLM922S"),F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME);
 }
+
+
+
+

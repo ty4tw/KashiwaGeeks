@@ -130,7 +130,7 @@ void task1(void)
 
     int rc = LoRa.sendData(LoRa_Port_NORM, ECHO, F("%04X%04X%08X"), temp, humi, press);
 
-    if ( rc == LoRa_RC_DATA_TOO_LONG )
+    if ( rc == LORA_RC_DATA_TOO_LONG )
     {
         ConsolePrint(F("\n !!!DATA_TOO_LONG\n"));
     }
@@ -138,15 +138,15 @@ void task1(void)
     {
         ConsolePrint(F("\n !!!No free CH\n"));
     }
-    else if ( rc == LoRa_RC_BUSY )
+    else if ( rc == LORA_RC_BUSY )
     {
         ConsolePrint(F("\n !!!Busy\n"));
     }
-    else if ( rc == LoRa_RC_NOT_JOINED )
+    else if ( rc ==LORA_RC_NOT_JOINED )
     {
         ConsolePrint(F("\n !!!Not Joined\n"));
     }
-    else if ( rc == LoRa_RC_ERROR )
+    else if ( rc == LORA_RC_ERROR )
    {
        ConsolePrint(F("\n !!!UNSUCCESS\n"));
    }
@@ -168,7 +168,7 @@ void task2(void)
 
     int rc = LoRa.sendPayloadConfirm(LoRa_Port_COMP, ECHO, &pl);
 
-    if ( rc == LoRa_RC_DATA_TOO_LONG )
+    if ( rc == LORA_RC_DATA_TOO_LONG )
     {
         ConsolePrint(F("\n !!!DATA_TOO_LONG\n"));
     }
@@ -176,15 +176,15 @@ void task2(void)
     {
         ConsolePrint(F("\n !!!No free CH\n"));
     }
-    else if ( rc == LoRa_RC_BUSY )
+    else if ( rc == LORA_RC_BUSY )
     {
         ConsolePrint(F("\n !!!Busy\n"));
     }
-    else if ( rc == LoRa_RC_NOT_JOINED )
+    else if ( rc == LORA_RC_NOT_JOINED )
     {
         ConsolePrint(F("\n !!!Not Joined\n"));
     }
-    else if ( rc == LoRa_RC_ERROR )
+    else if ( rc == LORA_RC_ERROR )
    {
        ConsolePrint(F("\n !!!UNSUCCESS\n"));
    }

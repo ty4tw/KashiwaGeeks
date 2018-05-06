@@ -128,10 +128,10 @@ ___
 **Parameter bool echo:** If true then data transmitted is outputed on console.   
 **Parameter format:** Format of transmitted data. same as format used in printf(). %f is not available.     
 **Parameter ... :** Variable arguments.    
-**Return Value LoRa_RC_SUCCESS:** when the transmition is normaly completed.    
-**Retrun Value LoRa_RC_DATA_TOO_LONG:** if the data transmitted is too long.    
-**Return Value LoRA_RC_NOT_JOINED:** if not joined.    
-**Return Value LoRa_RC_ERROR:** other errors.    
+**Return Value LORA_RC_SUCCESS:** when the transmition is normaly completed.    
+**Retrun Value LORA_RC_DATA_TOO_LONG:** if the data transmitted is too long.    
+**Return Value LORA_RC_NOT_JOINED:** if not joined.    
+**Return Value LORA_RC_ERROR:** other errors.    
 ___    
     
 **6) int sendDataConfirm(uint8_t port, bool echo, const __FlashStringHelper &format, ...);**    
@@ -141,10 +141,10 @@ ___
 **Parameter bool echo:** If true then data transmitted is outputed on console.   
 **Parameter format:** Format of transmitted data. same as format used in printf(). %f is not available.     
 **Parameter ... :** Variable arguments.    
-**Return Value LoRa_RC_SUCCESS:** when the transmition is normaly completed.    
-**Retrun Value LoRa_RC_DATA_TOO_LONG:** if the data transmitted is too long.    
-**Return Value LoRA_RC_NOT_JOINED:** if not joined.    
-**Return Value LoRa_RC_ERROR:** other errors.    
+**Return Value LORA_RC_SUCCESS:** when the transmition is normaly completed.    
+**Retrun Value LORA_RC_DATA_TOO_LONG:** if the data transmitted is too long.    
+**Return Value LORA_RC_NOT_JOINED:** if not joined.    
+**Return Value LORA_RC_ERROR:** other errors.    
 ___    
     
 **7)  int sendPayload(uint8_t port, bool echo, &Payload);**    
@@ -153,10 +153,10 @@ ___
 **Parameter uint8_t port:** Data transmitted is sent to the application specified by the port.    
 **Parameter bool echo:** If true then data transmitted is outputed on console.      
 **Parameter Payload:** Pointer of a Payload instance.    
-**Return Value LoRa_RC_SUCCESS:** when the transmition is normaly completed.    
-**Retrun Value LoRa_RC_DATA_TOO_LONG:** if the data transmitted is too long.    
-**Return Value LoRA_RC_NOT_JOINED:** if not joined.    
-**Return Value LoRa_RC_ERROR:** other errors.  
+**Return Value LORA_RC_SUCCESS:** when the transmition is normaly completed.    
+**Retrun Value LORA_RC_DATA_TOO_LONG:** if the data transmitted is too long.    
+**Return Value LORA_RC_NOT_JOINED:** if not joined.    
+**Return Value LORAa_RC_ERROR:** other errors.  
 ___
     
 **8) int sendPayloadConfirm(uint8_t port, bool echo, &Payload);**    
@@ -165,10 +165,10 @@ ___
 **Parameter uint8_t port:** Data transmitted is sent to the application specified by the port.    
 **Parameter bool echo:** If true then data transmitted is outputed on console.      
 **Parameter Payload:** Pointer of a Payload instance.    
-**Return Value LoRa_RC_SUCCESS:** when the transmition is normaly completed.    
-**Retrun Value LoRa_RC_DATA_TOO_LONG:** if the data transmitted is too long.    
-**Return Value LoRA_RC_NOT_JOINED:** if not joined.    
-**Return Value LoRa_RC_ERROR:** other errors.    
+**Return Value LORA_RC_SUCCESS:** when the transmition is normaly completed.    
+**Retrun Value LORA_RC_DATA_TOO_LONG:** if the data transmitted is too long.    
+**Return Value LORA_RC_NOT_JOINED:** if not joined.    
+**Return Value LORA_RC_ERROR:** other errors.    
 ___    
     
 **9)  Payload &getDownLinkPayload(void);**    
@@ -259,156 +259,8 @@ ___
 ___
 
     
-## 3. RAK811 Class methods    
-RAK811 represents an LoRaWAN Arduino Sheild which uses RAK811 device.   
-
-___ 
-
-**1) bool begin(uint32_t baudrate = 9600, uint8_t retryTx = 1, uint8_t retryJoine = 1 );**    
-
-**Function:** Initialize ADB922S    
-**Parameter uint32_t bauderate:** bauderate of a sirial port, valid values are 9600, 19200, 57600, 115200.    
-**Parameter uint8_t retryTx:** transmission retry count, valid value range from 0 to 255.    
-**Parameter uint8_t retryJoin:** retry count of join.    
-**Return Value:** Success true, fail false.  
-___    
     
-**2) bool join(void);**    
-
-**Function:** Connect to the LoRaWAN. Keys ready or not, execute join.    
-**Prameter:** None    
-**Return value:** If joined once then true. Not able to join after retry join, then false.   
-___    
-    
-**3) uint8_t setDr(LoRaDR);**    
-
-**Function:** Setup DR rate. DR rate defines FRMPayload length.    
-**Parameter:** DR rate, dr0, dr1, dr2, dr3, dr4, dr5    
-**Return Value:** FRMPayload length, setup fail the -1.    
-___    
-    
-**4) int sendData(uint8_t port, bool echo, const __FlashStringHelper &format, ...);**    
-
-**Function:** Transmit String data. 11) getDownLinkData(void) can be used to check if the DownLink data is received.    
-**Parameter uint8_t port:** Data transmitted is sent to the application specified by the port.    
-**Parameter bool echo:** If true then data transmitted is outputed on console.   
-**Parameter format:** Format of transmitted data. same as format used in printf(). %f is not available.     
-**Parameter ... :** Variable arguments.    
-**Return Value LoRa_RC_SUCCESS:** when the transmition is normaly completed.    
-**Retrun Value LoRa_RC_DATA_TOO_LONG:** if the data transmitted is too long.    
-**Return Value LoRA_RC_NOT_JOINED:** if not joined.    
-**Return Value LoRa_RC_ERROR:** other errors.    
-___    
-    
-**5) int sendStringConfirm(uint8_t port, bool echo, const __FlashStringHelper &format, ...);**    
-
-**Function:** Transmit String data with confirmation request. 11) getDownLinkData(void) can be used to check if the DownLink data is received.   
-**Parameter uint8_t port:** Data transmitted is sent to the application specified by the port.    
-**Parameter bool echo:** If true then data transmitted is outputed on console.   
-**Parameter format:** Format of transmitted data. same as format used in printf(). %f is not available.     
-**Parameter ... :** Variable arguments.    
-**Return Value LoRa_RC_SUCCESS:** when the transmition is normaly completed.    
-**Retrun Value LoRa_RC_DATA_TOO_LONG:** if the data transmitted is too long.    
-**Return Value LoRA_RC_NOT_JOINED:** if not joined.    
-**Return Value LoRa_RC_ERROR:** other errors.    
-___    
-    
-**6)  int sendPayload(uint8_t port, bool echo, &Payload);**    
-    
-**Function:** Transmit a Payload instance.  11) getDownLinkData(void) can be used to check if the DownLink data is received.       
-**Parameter uint8_t port:** Data transmitted is sent to the application specified by the port.    
-**Parameter bool echo:** If true then data transmitted is outputed on console.      
-**Parameter Payload:** Pointer of a Payload instance.    
-**Return Value LoRa_RC_SUCCESS:** when the transmition is normaly completed.    
-**Retrun Value LoRa_RC_DATA_TOO_LONG:** if the data transmitted is too long.    
-**Return Value LoRA_RC_NOT_JOINED:** if not joined.    
-**Return Value LoRa_RC_ERROR:** other errors.  
-___
-    
-**7) int sendPayloadConfirm(uint8_t port, bool echo, &Payload);**    
-
-**Function:** Transmit a Payload instance with confirmation request.  11) getDownLinkData(void) can be used to check if the DownLink data is received.     
-**Parameter uint8_t port:** Data transmitted is sent to the application specified by the port.    
-**Parameter bool echo:** If true then data transmitted is outputed on console.      
-**Parameter Payload:** Pointer of a Payload instance.    
-**Return Value LoRa_RC_SUCCESS:** when the transmition is normaly completed.    
-**Retrun Value LoRa_RC_DATA_TOO_LONG:** if the data transmitted is too long.    
-**Return Value LoRA_RC_NOT_JOINED:** if not joined.    
-**Return Value LoRa_RC_ERROR:** other errors.    
-___    
-    
-**8)  Payload &getDownLinkPayload(void);**    
-    
-**Function:** Acquire a Payload instance from the DownLink data previously recieved.    
-**Parameter:** None    
-**Return Value:** Pointer of the Payload instance.  0, if no DownLink data from the previous received.    
-___
-    
-**9)  uint8_t getDownLinkPort( void);**    
-    
-**Function:** Acquire the port from previously received DownLink data.    
-**Parameter:** None    
-**Return Value:** Port(number), 0 if no data.    
-___  
-    
-**10)  String getDownLinkData(void);**    
-    
-**Function:** Acquire the string data excludeding port(number) from previously received DownLink data.    
-**Parameter:** None    
-**Return Value:** String excluding Port. Null string if no data.    
-___
-    
-**11) void sleep(void);**    
-    
-**Function:** Set to infinite deep sleep. ( D7Pin is used to wakeup)   
-**Parameter:** None    
-**Return value:** None    
-___
-    
-**12) void wakeup(void);**    
-     
-**Function:** Wake up from infinte deep sleep.    
-**Parameter:** None    
-**Return value:** None    
-___
-    
-**13)  void setConfig(String param);**    
-    
-**Function:** Set Configurations.        
-**Parameter String:** key:value         
-**Return Value:** none    
-___
-    
-**14)  String getConfig(String key);**    
-    
-**Function:** Acquire the Configuration value.    
-**Parameter String** Key of a configuration parameter.    
-**Return Value:** String of a configuration parameter.    
-___
-    
-**15)  void getVersion(char &version, uint8_t length);**    
-      
-**Function:** Acquire the version of TLM922S.   
-**Parameter char &version:** Specified  return address fro the version.    
-**Parameter uint8_t length:** Maxmum length to obtain the version.    
-**Return Value:** String of version in the length specified returned in version argment.     
-___
-    
-**16)  uint8_t getMaxPayloadSize(void);**    
-    
-**Function:** Acquire the maximum transmittable payloadd length setten by setDR().    
-**Parameter:** None    
-**Return Value:** Transmittable Payload length.    
-___
-    
-**17)  void checkDownLink(void);**    
-    
-**Function:**  Excecutes the callback function that is linked to the specified port by PORT_LINK if DownLink data is received.    
-**Parameter:** None    
-**Return Value:** None    
-___
-    
-## 4. Payload Calss methods    
+## 3. Payload Calss methods    
 Payload Class represents FRMPayload. Maximum FRMPayload is 242 bytes.     
 To extend distance of transmission, Payload should be minimize as possible. (using Low DR rate)    
 This Class efficiently creates the one-bit-bool and 4-bits, 1-byte, 2-bytes, 4-bytes integer and unsinged integer in a way that eliminate the byte boundary of bits stream.    
