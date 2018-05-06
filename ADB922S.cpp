@@ -304,8 +304,8 @@ int ADB922S::send(String cmd, String resp1, String resp2 , bool echo, uint32_t t
                 }
                 LoRaDebug(F("MARGIN %d GW %d\n"), _margin, _nbGw);
 
-                //  clear ADR_ACK_CNT
-                _adrAckCnt = 0;
+                //  set  ADR_ACK_CNT  (-1)
+                _adrAckCnt = 65535;    // (uint16_t ) 65535  = (int ) -1
                 _minDROn = false;
                 return LoRa_RC_SUCCESS;
             }
@@ -880,6 +880,8 @@ int ADB922S::getDcBand(CHID bandId)
      return 0;
 }
 
+
+/* get a uplink counter that will be used at next transmission.*/
 uint16_t ADB922S::getUpcnt(void)
 {
     char cnt[6];
