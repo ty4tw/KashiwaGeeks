@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <ADB922S.h>
 #include <Payload.h>
+#include <AppDefine.h>
 
 using namespace tomyApplication;
 extern int getFreeMemory(void);

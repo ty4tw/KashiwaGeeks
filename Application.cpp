@@ -364,7 +364,7 @@ Application::~Application(void)
 
 void Application::initialize(void)
 {
-    DebugPrint(F("\n\n_/_/_/ KashiwaGeeks 0.9.2 _/_/_/\r\n\n\n"));
+    DebugPrint(KGS_VERSION);
     if ( getPinMode(2) == INPUT_PULLUP)
     {
         _int0enable = true;
