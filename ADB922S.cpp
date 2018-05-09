@@ -130,9 +130,16 @@ bool ADB922S::setTxRetryCount(uint8_t retry)
     return false;
 }
 
-void ADB922S::setADRReqBit(void)
+bool ADB922S::checkADR(bool confirm)
 {
-        // ToDo:   command
+        if ( confirm || _adrReqBitOn )
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
 }
 
 
@@ -460,6 +467,7 @@ int ADB922S::transmitString(uint8_t port, bool echo, bool confirm, const __Flash
 
     // ADR control
     controlADR();
+    confirm = checkADR(confirm);
 
     if (confirm)
     {
@@ -512,6 +520,7 @@ int ADB922S::transmitBinaryData(uint8_t port, bool echo, bool confirm, uint8_t* 
 
     // ADR control
     controlADR();
+    confirm = checkADR(confirm);
 
     memset(data, 0, (22 + _maxPayloadSize*2 ));
 
@@ -659,7 +668,6 @@ set_DR_Lower:
         if ( _adrReqBitOn )
         {
             ADRDebug(F("Set ADRReqBit ON\n"));
-            setADRReqBit();  // ToDo:
         }
     }
     ADRDebug(F("-------------------\n"));

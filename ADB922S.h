@@ -141,7 +141,7 @@ private:
     uint8_t ctoh(uint8_t ch);
     void checkRecvData(char* buff, bool conf);
     void controlADR(void);
-    void setADRReqBit(void);
+    bool checkADR(bool conf);
     bool setMaxPower(void);
     bool setLowerDr(void);
     bool setChStat(uint8_t ch, bool stat);
