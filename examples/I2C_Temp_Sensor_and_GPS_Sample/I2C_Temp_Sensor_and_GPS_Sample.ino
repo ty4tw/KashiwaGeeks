@@ -37,7 +37,7 @@ void start()
     power_spi_disable();       // SPI
 
     /*  setup the LoRaWAN device  */
-    if ( LoRa.begin(BPS_19200) == false )
+    if ( LoRa.begin(BPS_19200, DR3) == false )
     {
         while(true)
         {
@@ -56,8 +56,6 @@ void start()
     /* setup I2C */
     Wire.begin();
 
-    /* Set  DR */
-    LoRa.setDr(DR3);  // DR0-DR5
 
     /*  join LoRaWAN */
     LoRa.join();

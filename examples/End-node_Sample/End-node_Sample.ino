@@ -34,7 +34,7 @@ void start()
     //power_twi_disable();         // I2C
 
     /*  setup ADB922S  */
-    if ( LoRa.begin(BPS_19200) == false )
+    if ( LoRa.begin(BPS_19200, DR3) == false )
     {
         while(true)
         {
@@ -45,8 +45,6 @@ void start()
         }
     }
 
-    /* Set DR3 */
-    LoRa.setDr(DR3);  // DR0 to DR5
 
     /*  join LoRaWAN */
     LoRa.join();

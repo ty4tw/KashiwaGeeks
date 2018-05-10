@@ -100,7 +100,6 @@ public:
     String getDownLinkData(void);
     void checkDownLink(void);
 
-    int setDr(LoRaDR dr);
     bool setADR(bool onOff);
     bool setADRParams(uint8_t adrAckLimit, uint8_t adrAckDelay);
     bool setLinkCheck(void);
@@ -119,6 +118,7 @@ public:
     void wakeup(void);
 
 private:
+    int setDr(LoRaDR dr);
     uint8_t getDr(void);
     uint8_t getPwr(void);
     bool isAdrOn(void);
