@@ -908,14 +908,14 @@ int ADB922S::getDcBand(CHID bandId)
 uint16_t ADB922S::getUpcnt(void)
 {
     char cnt[6];
-    send( F("lorawan upcnt"), F(""), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME, cnt, 5);
+    send( F("lorawan get_upcnt"), F(""), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME, cnt, 5);
     return (uint8_t) atoi(cnt);
 }
 
 uint16_t ADB922S::getDowncnt(void)
 {
     char cnt[6];
-    send( F("lorawan downcnt"), F(""), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME, cnt, 5);
+    send( F("lorawan get_downcnt"), F(""), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME, cnt, 5);
     return (uint8_t) atoi(cnt);
 }
 
