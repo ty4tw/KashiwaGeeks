@@ -30,7 +30,7 @@ const char* loraTxConfirmCmd = "lorawan tx cnf";
 ADB922S::ADB922S(void):
         _baudrate{9600}, _joinStatus{not_joined}, _txTimeoutValue{LoRa_RECEIVE_DELAY2}, _stat{0}, _txOn{false}, _minDR{DR2},
         _minDROn{false}, _adrAckCnt{0}, _adrReqBitOn{false}, _adrAckDelay{ADR_ACK_DELAY}, _adrAckLimit{ADR_ACK_LIMIT}, _noFreeChCnt{0},
-        _nbGw{0}, _margin{0}, _chStat{0}
+        _nbGw{0}, _margin{0}, _chStat{0}, _joinRetryCount{0}
 {
     _serialPort = new SoftwareSerial(LoRa_Rx_PIN, LoRa_Tx_PIN);
     _txRetryCount = 1;
@@ -43,7 +43,7 @@ ADB922S::~ADB922S(void)
 }
 
 
-bool ADB922S::begin(uint32_t baudrate, LoRaDR dr, uint8_t txRetry )
+bool ADB922S::begin(uint32_t baudrate, LoRaDR dr, uint8_t txRetry, uint8_t joinRetry )
 {
     pinMode(LoRa_Rx_PIN, INPUT);
     pinMode(LoRa_WAKEUP_PIN, OUTPUT);
@@ -52,6 +52,7 @@ bool ADB922S::begin(uint32_t baudrate, LoRaDR dr, uint8_t txRetry )
     _serialPort->setTimeout(LoRa_SERIAL_WAIT_TIME);
     _minDR = dr;
     _txRetryCount = txRetry;
+    _joinRetryCount = joinRetry;
 
     for ( uint8_t retry = 0; retry < 3; retry++ )
     {
@@ -172,18 +173,22 @@ bool ADB922S::isJoin(void)
 
 bool ADB922S::join(void)
 {
-    if ( connect(true) )
+    for ( uint8_t i = 0; i < _joinRetryCount; i++ )
     {
-        _chStat = 0;
-        for ( uint8_t i = 0; i < 16; i++ )
+        if ( connect(true) )
         {
-            _chStat = _chStat << 1;
-            if ( getChStat(i) )
+            _chStat = 0;
+            for ( uint8_t i = 0; i < 16; i++ )
             {
-               _chStat |= 0x00001;
+                _chStat = _chStat << 1;
+                if ( getChStat(i) )
+                {
+                   _chStat |= 0x00001;
+                }
             }
+            return true;
         }
-        return true;
+        delay( 40 * 1000);  // Duty 1%
     }
     return false;
 }

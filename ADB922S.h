@@ -86,7 +86,7 @@ public:
     ADB922S(void);
     ~ADB922S(void);
 
-    bool begin(uint32_t baudrate, LoRaDR dr = DR2, uint8_t retryTx = 1 );
+    bool begin(uint32_t baudrate, LoRaDR dr = DR2, uint8_t retryTx = 1 , uint8_t retryJoin = 1 );
     bool join(void);
     bool isJoin(void);
 
@@ -150,6 +150,7 @@ private:
     uint32_t  _baudrate;
     JoineStatus  _joinStatus;
     uint8_t  _txRetryCount;
+    uint8_t _joinRetryCount;
     uint8_t  _maxPayloadSize;
     uint32_t  _txTimeoutValue;
     String  _downLinkData;
