@@ -14,7 +14,7 @@ ADB922S LoRa;
 
 void start()
 {
-    ConsoleBegin(BPS_57600);  // DR0 to DR5
+    ConsoleBegin(BPS_57600);
     //DisableConsole();
     //DisableDebug();
 
