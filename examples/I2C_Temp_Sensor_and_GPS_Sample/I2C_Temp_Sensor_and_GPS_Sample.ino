@@ -2,7 +2,7 @@
 #include <Wire.h>
 #include "KGPS.h"
 
-#define ECHO false
+#define ECHO true
 
 ADB922S LoRa;
 
