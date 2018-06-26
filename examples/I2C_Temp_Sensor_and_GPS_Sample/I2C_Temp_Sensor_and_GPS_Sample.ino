@@ -8,7 +8,7 @@ ADB922S LoRa;
 
 KGPS gps;
 uint8_t portGPS = 12;
-uint8_t portTemp = 13;
+uint8_t portTemp = 16;
 
 //================================
 //          Initialize Device Function
