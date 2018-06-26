@@ -175,21 +175,28 @@ bool ADB922S::join(void)
 {
     for ( uint8_t i = 0; i < _joinRetryCount; i++ )
     {
+        DebugPrint(F("try to join... "));
         if ( connect(true) )
         {
             _chStat = 0;
-            for ( uint8_t i = 0; i < 16; i++ )
+            for ( uint8_t j = 0; j < 16; j++ )
             {
                 _chStat = _chStat << 1;
-                if ( getChStat(i) )
+                if ( getChStat(j) )
                 {
                    _chStat |= 0x00001;
                 }
             }
+            DebugPrint(F("accepted.\n"));
             return true;
         }
-        delay( 40 * 1000);  // Duty 1%
+        for ( uint8_t j = 0; j < 40 && i == _joinRetryCount; j++ )
+        {
+            delay(1000);  // Duty 1%
+        }
+
     }
+    DebugPrint(F("fail to join.\n"));
     return false;
 }
 
@@ -355,7 +362,6 @@ int ADB922S::send(String cmd, String resp1, String resp2 , bool echo, uint32_t t
     }
     else if (resp.indexOf(resp1) >= 0 ||  ( resp2 != "" && resp.indexOf(resp2) >= 0 ))
     {
-        LoRaDebug(F(" Send success\n"));
         _noFreeChCnt = 0;
         rc = LORA_RC_SUCCESS;
 
@@ -363,13 +369,13 @@ int ADB922S::send(String cmd, String resp1, String resp2 , bool echo, uint32_t t
     }
     else if (resp.indexOf(F("not_joined")) >= 0 )
     {
-        LoRaDebug(F(" Not Joined. \n"));
         _joinStatus = not_joined;
         rc = LORA_RC_NOT_JOINED;
+        DebugPrint(F("Data too long\n"));
     }
     else if (resp.indexOf(F("no_free_ch")) >= 0 )
     {
-        LoRaDebug(F(" No free ch.\n"));
+       DebugPrint(F("not joined\n"));
        if ( _noFreeChCnt > MAX_NO_FREE_CH_CNT)
        {
            reset();
@@ -381,22 +387,24 @@ int ADB922S::send(String cmd, String resp1, String resp2 , bool echo, uint32_t t
        else
        {
            _noFreeChCnt++;
-            rc = LORA_RC_NO_FREE_CH;
+           rc = LORA_RC_NO_FREE_CH;
+           DebugPrint(F("no free ch.\n"));
        }
     }
     else if (resp.indexOf(F("invalid_data_length")) >= 0 )
     {
-        LoRaDebug(F(" Data too long.\n"));
         rc = LORA_RC_DATA_TOO_LONG;
+        DebugPrint(F("Data too long\n"));
     }
     else if (resp.indexOf(F("busy")) >= 0 )
     {
-        LoRaDebug(F(" Busy\n"));
         rc = LORA_RC_BUSY;
+        DebugPrint(F("busy\n"));
     }
     else
     {
         rc = LORA_RC_ERROR;
+        DebugPrint(F("no resp\n"));
     }
 #ifdef FREE_MEMORY_CHECK
     ConsolePrint(F("Free RAM is %d bytes\n"), getFreeMemory());
@@ -409,7 +417,8 @@ int ADB922S::send(const __FlashStringHelper* cmd, const __FlashStringHelper* res
     String scmd = String(cmd);
     String sresp1 = String(resp1);
     String sresp2 = String(resp2);
-    return send(scmd, sresp1, sresp2, echo, timeout, returnVal, len);
+    int rc = send(scmd, sresp1, sresp2, echo, timeout, returnVal, len);
+    return rc;
 }
 
 //
@@ -491,13 +500,6 @@ int ADB922S::transmitString(uint8_t port, bool echo, bool confirm, const __Flash
     pos = data + len;
 
     vsnprintf_P(pos, sizeof(data) - len, (const char*)format, args);
-    if (  strlen(data) >= (size_t)(22 + _maxPayloadSize) )
-    {
-        LoRaDebug(F("Error: Data is too long.\n"));
-        _stat = LORA_RC_DATA_TOO_LONG;
-        goto exit;
-    }
-
     _stat = send(data, "tx_ok", "rx", echo, _txTimeoutValue, buffer, (20 + _maxPayloadSize+1 +1 )  );
     checkRecvData(buffer, confirm);
 exit:
@@ -529,13 +531,6 @@ int ADB922S::transmitBinaryData(uint8_t port, bool echo, bool confirm, uint8_t* 
     confirm = checkADR(confirm);
 
     memset(data, 0, (22 + _maxPayloadSize*2 ));
-
-    if ( dataLen > _maxPayloadSize )
-    {
-        LoRaDebug(F("Error: Data %d is too long.\n"), dataLen);
-        _stat = LORA_RC_DATA_TOO_LONG;
-        goto exit;
-    }
 
     if (confirm)
     {
@@ -572,6 +567,7 @@ void ADB922S::checkRecvData(char* buff, bool conf)
         if ( conf )
         {
             _adrAckCnt = 0;
+            _adrReqBitOn = false;
             _minDROn = false;
         }
         else
@@ -593,6 +589,10 @@ void ADB922S::checkRecvData(char* buff, bool conf)
            _txOn= true;
            return;
         }
+    }
+    else if ( _stat == LORA_RC_ERROR )
+    {
+        _adrAckCnt++;
     }
     _downLinkData = F("");
     _txOn = false;
@@ -648,7 +648,7 @@ set_DR_Lower:
                         bool  chs = stats & 0x0001;
                         stats = stats >> 1;
                         ADRDebug(F("Ch%02d:%s\n"), 15 - ch, (chs ? "ON": "OFF"));
-                        //setChStat(15 - ch, chs);   // ToDo:   uncomment
+                        setChStat(15 - ch, chs);   // ToDo:   uncomment
                     }
                 }
                 _adrReqBitOn = false;
@@ -657,7 +657,7 @@ set_DR_Lower:
 
         if ( _adrAckCnt == _adrAckLimit + _adrAckDelay  && !_maxPwrOn)
         {
-            if ( getPwr() == 0 )
+            if ( getPwrIndex() == 0 )
             {
                 ADRDebug(F("Power is max\n"));
                 _adrAckCnt += _adrAckDelay;
@@ -666,8 +666,7 @@ set_DR_Lower:
             }
             else
             {
-                ADRDebug(F("SetMaxPwr Dummy\n"));
-                //_maxPwrOn = setMaxPower();    ToDo: uncomment
+                _maxPwrOn = setMaxPower();
             }
         }
 
@@ -759,13 +758,13 @@ bool ADB922S::setLowerDr(void )
 
     if (dr <= (uint8_t) _minDR )
     {
-        LoRaDebug(F(" DR is min %d\n"),dr);
+        ADRDebug(F("DR is min %d\n"),dr);
         return true;
     }
     else
     {
         setDr((LoRaDR)--dr);
-        LoRaDebug(F(" Set DR=%d\n"), dr);
+        ADRDebug(F("Set DR=%d\n"), dr);
         return false;
     }
 }
@@ -773,6 +772,7 @@ bool ADB922S::setLowerDr(void )
 bool ADB922S::setMaxPower(void)
 {
     char  cmd[20];
+    ADRDebug(F("Set Power Max\n"));
     String cdata = F("lorawan set_power 5");
     sprintf(cmd, cdata.c_str());
     if ( send(cmd, F("Ok"), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME) == 0 )
@@ -846,7 +846,7 @@ uint8_t ADB922S::getDr(void)
     return (uint8_t) atoi(dr);
 }
 
-uint8_t ADB922S::getPwr(void)
+uint8_t ADB922S::getPwrIndex(void)
 {
     char pwr[3];
      send( F("lorawan get_pwr"), F(""), F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME, pwr, 2);
@@ -949,7 +949,6 @@ int ADB922S::reset(void)
 {
     return send(F("mod reset"), F("TLM922S"),F(""), ECHOFLAG, LoRa_INIT_WAIT_TIME);
 }
-
 
 
 

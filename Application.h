@@ -30,6 +30,8 @@ void setupDevice(void);
 void sleep(void);
 void wakeup(void);
 void resetArduino(void);
+void EnableInt0(void);
+void EnableInt1(void);
 
 void DebugPrint(const __FlashStringHelper *format, ...);
 void ConsolePrint(const __FlashStringHelper *format, ...);

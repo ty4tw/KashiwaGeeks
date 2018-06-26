@@ -24,8 +24,11 @@ void start()
     /*
      * Enable Interrupt 0 & 1  Uncomment the following two  lines.
      */
-    //pinMode(2, INPUT_PULLUP);
-    //pinMode(3, INPUT_PULLUP); // For ADB922S, CUT the pin3 of the Sheild.
+    //EnableInt0();
+    //EnableInt1();  // For ADB922S, CUT the pin3 of the Sheild.
+
+
+    ConsolePrint(F("\n**** GPS_Sample *****\n"));
 
     /*  setup Power save Devices */
     power_adc_disable();       // ADC converter

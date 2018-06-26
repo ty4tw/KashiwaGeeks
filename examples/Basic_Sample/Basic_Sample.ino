@@ -3,7 +3,7 @@
 void start(void)
 {
     ConsoleBegin(9600);
-    pinMode(2, INPUT_PULLUP);    // Enable Interrupt 0
+    EnableInt0();
 
   //DisableConsole();
   //DisableDebug();

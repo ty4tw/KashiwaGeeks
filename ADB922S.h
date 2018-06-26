@@ -86,7 +86,7 @@ public:
     ADB922S(void);
     ~ADB922S(void);
 
-    bool begin(uint32_t baudrate, LoRaDR dr = DR2, uint8_t retryTx = 1 , uint8_t retryJoin = 1 );
+    bool begin(uint32_t baudrate, LoRaDR dr = DR2, uint8_t retryTx = 1 , uint8_t retryJoin = 3 );
     bool join(void);
     bool isJoin(void);
 
@@ -104,6 +104,7 @@ public:
     bool setADRParams(uint8_t adrAckLimit, uint8_t adrAckDelay);
     bool setLinkCheck(void);
     bool setTxRetryCount(uint8_t retry);
+    int setDr(LoRaDR dr);
 
     void getVersion(char* version, uint8_t length);
     uint8_t getMaxPayloadSize(void);
@@ -118,9 +119,8 @@ public:
     void wakeup(void);
 
 private:
-    int setDr(LoRaDR dr);
     uint8_t getDr(void);
-    uint8_t getPwr(void);
+    uint8_t getPwrIndex(void);
     bool isAdrOn(void);
     int  getChPara(CHID chId);
     bool getChStat(CHID chId);

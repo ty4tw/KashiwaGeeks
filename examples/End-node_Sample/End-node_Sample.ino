@@ -21,10 +21,11 @@ void start()
     /*
      * Enable Interrupt 0 & 1  Uncomment the following two  lines.
      */
-    //pinMode(2, INPUT_PULLUP);
-    //pinMode(3, INPUT_PULLUP); // For ADB922S, CUT the pin3 of the Sheild.
+    //EnableInt0();
+    //EnableInt1();  // For ADB922S, CUT the pin3 of the Sheild.
 
-    ConsolePrint(F("**** End-node_Sample *****\n"));
+
+    ConsolePrint(F("\n**** End-node_Sample *****\n"));
 
     /*  setup Power save Devices */
     //power_adc_disable();          // ADC converter
@@ -112,7 +113,8 @@ void task1(void)
     ConsolePrint(F("%%RH: %d %%\n"), humi);
     ConsolePrint(F("Pressure: %d Pa\n"), press);
 
-    LoRa.sendData(LoRa_Port_NORM, ECHO, F("%04X%04X%08X"), temp, humi, press);
+    int rc = LoRa.sendData(LoRa_Port_NORM, ECHO, F("%04X%04X%08X"), temp, humi, press);
+    checkResult(rc);
 }
 
 /*-------------------------------------------------------------*/
@@ -129,7 +131,37 @@ void task2(void)
     pl.set_float(bme_humi);
     pl.set_float(bme_press);
 
-    LoRa.sendPayload(LoRa_Port_COMP, ECHO, &pl);
+    int rc = LoRa.sendPayload(LoRa_Port_COMP, ECHO, &pl);
+    checkResult(rc);
+}
+
+/*-------------------------------------------------------------*/
+void checkResult(int rc )
+{
+    if ( rc == LORA_RC_SUCCESS )
+    {
+        ConsolePrint(F("\n SUCCESS\n"));
+    }
+    else if ( rc == LORA_RC_DATA_TOO_LONG )
+    {
+      ConsolePrint(F("\n !!!DATA_TOO_LONG\n"));
+    }
+    else if ( rc == LORA_RC_NO_FREE_CH )
+    {
+      ConsolePrint(F("\n !!!No free CH\n"));
+    }
+    else if ( rc == LORA_RC_BUSY )
+    {
+      ConsolePrint(F("\n !!!Busy\n"));
+    }
+    else if ( rc ==LORA_RC_NOT_JOINED )
+    {
+      ConsolePrint(F("\n !!!Not Joined\n"));
+    }
+    else if ( rc == LORA_RC_ERROR )
+    {
+     ConsolePrint(F("\n !!!UNSUCCESS\n"));
+    }
 }
 
 //===============================

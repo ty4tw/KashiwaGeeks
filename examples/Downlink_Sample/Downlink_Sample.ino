@@ -23,10 +23,10 @@ void start()
     /*
      * Enable Interrupt 0 & 1  Uncomment the following two  lines.
      */
-    //pinMode(2, INPUT_PULLUP);
-    //pinMode(3, INPUT_PULLUP); // For ADB922S, CUT the pin3 of the Sheild.
+    //EnableInt0();
+    //EnableInt1();  // For ADB922S, CUT the pin3 of the Sheild.
 
-    ConsolePrint(F("**** Downlink_Sample *****\n"));
+    ConsolePrint(F("\n**** Downlink_Sample *****\n"));
 
     /*  setup Power save Devices */
     //power_adc_disable();          // ADC converter
@@ -78,12 +78,12 @@ void wakeup(void)
 //================================
 void int0D2(void)
 {
-  ConsolePrint(F("\nINT0 割込み発生\n"));
+  ConsolePrint(F("\n!!! INT0\n"));
 }
 
 void int1D3(void)
 {
-  ConsolePrint(F("\nINT1 割込み発生\n"));
+  ConsolePrint(F("\n!!! INT1\n"));
 }
 
 
@@ -161,7 +161,6 @@ void task2(void)
 TASK_LIST = {
         TASK(task1, 0, 15),
         TASK(task2, 8, 15),
-        //TASK(task3),
         END_OF_TASK_LIST
 };
 
