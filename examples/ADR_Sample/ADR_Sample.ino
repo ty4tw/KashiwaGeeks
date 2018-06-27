@@ -64,6 +64,7 @@ void start()
     /*  join LoRaWAN */
     LoRa.join();
 
+    ConsolePrint(F("\n      Press Interrupt Button to proceed.!\n"));
 }
 
 //================================
