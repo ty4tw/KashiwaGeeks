@@ -35,7 +35,7 @@ void start()
     //power_twi_disable();         // I2C
 
     /*  setup ADB922S  */
-    if ( LoRa.begin(BPS_19200, DR3) == false )
+    if ( LoRa.begin(BPS_9600, DR3) == false )
     {
         while(true)
         {
@@ -170,8 +170,8 @@ void checkResult(int rc )
 //===============================
 
 TASK_LIST = {
-        TASK(task1, 0, 10),
-        TASK(task2, 8, 10),
+        TASK(task1, 0, 1),
+        TASK(task2, 1, 2),
         END_OF_TASK_LIST
 };
 

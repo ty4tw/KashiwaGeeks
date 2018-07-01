@@ -86,7 +86,7 @@ bool KGPS::isReady(void)
  *
  * Laitude 3B, Longitude 3B, Altitude 2B,  Number of satellites 1B
  */
-Payload* KGPS::getPayload(void)
+Payload* KGPS::getLocation(void)
 {
   if ( isReady() )
   {

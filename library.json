@@ -1,0 +1,19 @@
+{
+  "name": "KashiwaGeeks",
+  "keywords": "LoRaWAN",
+  "description": "An application framework for LoRaWAN devices",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/ty4tw/KashiwaGeeks"
+  },
+  "frameworks": "arduino",
+  "platforms": "atmelavr",
+  "version": "0.10.1",
+  "authors":
+	{
+    "name": "Tomoaki Yamaguchi",
+    "email": "tomoaki@tomy-tech.com"
+	},
+	"keywords":"lorawan,adb922s"
+}

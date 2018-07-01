@@ -47,7 +47,7 @@ void start()
     //power_twi_disable();         // I2C
 
     /*  setup ADB922S  */
-    if ( LoRa.begin(BPS_19200) == false )
+    if ( LoRa.begin(BPS_9600) == false )
     {
         while(true)
         {
@@ -65,6 +65,8 @@ void start()
     LoRa.join();
 
     ConsolePrint(F("\n      Press Interrupt Button to proceed.!\n"));
+
+    LoRa.setDr(DR5);
 }
 
 //================================

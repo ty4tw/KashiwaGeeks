@@ -36,7 +36,7 @@ void start()
     //power_twi_disable();           // I2C
 
     /*  setup ADB922S  */
-    if ( LoRa.begin(BPS_19200, DR3) == false )
+    if ( LoRa.begin(BPS_9600, DR3) == false )
     {
         while(true)
         {
@@ -92,14 +92,14 @@ void int1D3(void)
 //================================
 void port14(void)
 {
-  ConsolePrint("%s\n", LoRa.getDownLinkData().c_str());
+  ConsolePrint("\n\nDownlink data was received.   Data=%s\n\n", LoRa.getDownLinkData().c_str());
 }
 
 void port15(void)
 {
     Payload* pl = LoRa.getDownLinkPayload();
     uint16_t dld = pl->get_uint16();
-    ConsolePrint(F("DL=%d\n"), dld);
+    ConsolePrint(F("\n\nDownlink data was received.   Data=%d\n\n"), dld);
 }
 
 PORT_LIST = { 
@@ -159,8 +159,8 @@ void task2(void)
 //===============================
 
 TASK_LIST = {
-        TASK(task1, 0, 15),
-        TASK(task2, 8, 15),
+        TASK(task1, 0, 1),
+        TASK(task2, 1, 2),
         END_OF_TASK_LIST
 };
 

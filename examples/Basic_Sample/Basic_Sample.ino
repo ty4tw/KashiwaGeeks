@@ -44,8 +44,8 @@ void func2()
 //     TASK( function, initial offset, interval by minute )
 //===============================
 TASK_LIST = {
-  TASK(func1, 0, 10),
-  TASK(func2, 3, 10),
+  TASK(func1, 0, 1),
+  TASK(func2, 1 2),
   END_OF_TASK_LIST
 };
 

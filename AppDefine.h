@@ -21,6 +21,6 @@
 /*
  *  Version
  */
-#define  KGS_VERSION   F("\n_/_/_/ KashiwaGeeks 0.9.4 _/_/_/\r\n\n")
+#define  KGS_VERSION   F("\n_/_/_/ KashiwaGeeks 0.10.1 _/_/_/\r\n\n")
 
 #endif /* LIBRARIES_KASHIWAGEEKS_APPDEFINE_H_ */

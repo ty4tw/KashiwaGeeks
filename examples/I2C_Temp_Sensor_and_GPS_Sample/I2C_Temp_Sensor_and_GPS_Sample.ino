@@ -40,7 +40,7 @@ void start()
     power_spi_disable();       // SPI
 
     /*  setup the LoRaWAN device  */
-    if ( LoRa.begin(BPS_19200, DR3) == false )
+    if ( LoRa.begin(BPS_9600, DR3) == false )
     {
         while(true)
         {
@@ -52,7 +52,7 @@ void start()
     }
 
     /* setup the GPS */
-    gps.begin(9600, 8, 9);
+    gps.begin(BPS_9600, 8, 9);
     ConsolePrint(F("Initilizing GPS\n"));
     while( !gps.isReady() ){ };
 
@@ -77,7 +77,7 @@ void taskTemp(void)
 //    TASK( function, initial offset, interval by minute )
 //========================================
 TASK_LIST = {
-        TASK(taskTemp, 0, 10),
+        TASK(taskTemp, 0, 1),
         END_OF_TASK_LIST
 };
 
@@ -115,7 +115,7 @@ void sendLocation(void)
 {
     gps.wakeup();
     while( !gps.isReady() ){ };
-    Payload* pl = gps.getPayload();
+    Payload* pl = gps.getLocation();
     if (pl)
     {
         LoRa.sendPayload(portGPS, ECHO, pl);

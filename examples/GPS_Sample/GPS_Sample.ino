@@ -35,7 +35,7 @@ void start()
     power_spi_disable();       // SPI
 
     /*  setup ADB922S  */
-    if ( LoRa.begin(BPS_19200, DR2) == false )
+    if ( LoRa.begin(BPS_9600, DR2) == false )
     {
         while(true)
         {
