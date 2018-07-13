@@ -46,10 +46,8 @@ void start()
         }
     }
 
-
     /*  join LoRaWAN */
     LoRa.join();
-
 }
 
 //================================
@@ -89,7 +87,6 @@ void int1D3(void)
   task2();
 }
 
-
 //================================
 //    Functions to be executed periodically
 //================================
@@ -99,21 +96,20 @@ void int1D3(void)
 float bme_temp = 10.2;
 float bme_humi = 20.2;
 float bme_press = 50.05;
-
+int16_t temp = bme_temp * 100;
+uint16_t humi = bme_humi * 100;
+uint32_t press = bme_press * 100;
 
 /*-------------------------------------------------------------*/
 void task1(void)
 {
-    int16_t temp = bme_temp * 100;
-    uint16_t humi = bme_humi * 100;
-    uint32_t press = bme_press * 100;
     char s[16];
     ConsolePrint(F("\n  Task1 invoked\n\n"));
     ConsolePrint(F("Temperature:  %d degrees C\n"), temp);
     ConsolePrint(F("%%RH: %d %%\n"), humi);
     ConsolePrint(F("Pressure: %d Pa\n"), press);
 
-    int rc = LoRa.sendData(LoRa_Port_NORM, ECHO, F("%04X%04X%08X"), temp, humi, press);
+    int rc = LoRa.sendData(LoRa_Port_NORM, ECHO, F("%04x%04x%08x"), temp, humi, press);
     checkResult(rc);
 }
 
