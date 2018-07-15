@@ -79,7 +79,8 @@ create	KEYWORD2
 
 isReady	KEYWORD2
 getLocation	KEYWORD2
-getUtc	KEYWORD2
+getTime	KEYWORD2
+getDate	KEYWORD2
 
 power_adc_disable	KEYWORD2
 power_spi_disable	KEYWORD2
@@ -94,6 +95,7 @@ DisableConsole	KEYWORD2
 DisableDebug	KEYWORD2
 EnableInt0	KEYWORD2
 EnableInt1	KEYWORD2
+SetUTC	KEYWORD2
 
 TASK	KEYWORD2
 PORT	KEWWORD2

@@ -106,3 +106,12 @@ Payload* KGPS::getLocation(void)
   return 0;
 }
 
+uint16_t KGPS::getTime(void)
+{
+    return _gps.time.value();
+}
+
+uint16_t KGPS::getDate(void)
+{
+    return _gps.date.value();
+}

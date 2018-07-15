@@ -41,6 +41,7 @@ void ConsoleBegin(unsigned long baud);
 void ConsoleBegin(unsigned long baud, uint8_t rxpin, uint8_t txpin);
 void DisableConsole(void);
 void DisableDebug(void);
+void SetUTC(uint16_t ddmmyy, uint16_t hhmmss);
 
 namespace tomyApplication
 {
