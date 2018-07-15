@@ -21,10 +21,11 @@ void start()
     /*
      * Enable Interrupt 0 & 1  Uncomment the following two  lines.
      */
-    //pinMode(2, INPUT_PULLUP);
-    //pinMode(3, INPUT_PULLUP); // For ADB922S, CUT the pin3 of the Sheild.
+    //EnableInt0();
+    //EnableInt1();  // For ADB922S, CUT the pin3 of the Sheild.
 
-    ConsolePrint(F("**** End-node_Sample *****\n"));
+
+    ConsolePrint(F("\n**** End-node_Sample *****\n"));
 
     /*  setup Power save Devices */
     //power_adc_disable();          // ADC converter
@@ -34,7 +35,7 @@ void start()
     //power_twi_disable();         // I2C
 
     /*  setup ADB922S  */
-    if ( LoRa.begin(BPS_19200) == false )
+    if ( LoRa.begin(BPS_9600, DR3) == false )
     {
         while(true)
         {
@@ -44,9 +45,6 @@ void start()
             delay(300);
         }
     }
-
-    /* set minimum DR. to expand the payload's size. */
-    LoRa.setDr(DR3);  // DR0 to DR5
 
     /*  join LoRaWAN */
     LoRa.join();
@@ -89,7 +87,6 @@ void int1D3(void)
   task2();
 }
 
-
 //================================
 //    Functions to be executed periodically
 //================================
@@ -99,21 +96,21 @@ void int1D3(void)
 float bme_temp = 10.2;
 float bme_humi = 20.2;
 float bme_press = 50.05;
-
+int16_t temp = bme_temp * 100;
+uint16_t humi = bme_humi * 100;
+uint32_t press = bme_press * 100;
 
 /*-------------------------------------------------------------*/
 void task1(void)
 {
-    int16_t temp = bme_temp * 100;
-    uint16_t humi = bme_humi * 100;
-    uint32_t press = bme_press * 100;
     char s[16];
     ConsolePrint(F("\n  Task1 invoked\n\n"));
     ConsolePrint(F("Temperature:  %d degrees C\n"), temp);
     ConsolePrint(F("%%RH: %d %%\n"), humi);
     ConsolePrint(F("Pressure: %d Pa\n"), press);
 
-    LoRa.sendData(LoRa_Port_NORM, ECHO, F("%04X%04X%08X"), temp, humi, press);
+    int rc = LoRa.sendData(LoRa_Port_NORM, ECHO, F("%04x%04x%08x"), temp, humi, press);
+    checkResult(rc);
 }
 
 /*-------------------------------------------------------------*/
@@ -130,7 +127,37 @@ void task2(void)
     pl.set_float(bme_humi);
     pl.set_float(bme_press);
 
-    LoRa.sendPayload(LoRa_Port_COMP, ECHO, &pl);
+    int rc = LoRa.sendPayload(LoRa_Port_COMP, ECHO, &pl);
+    checkResult(rc);
+}
+
+/*-------------------------------------------------------------*/
+void checkResult(int rc )
+{
+    if ( rc == LORA_RC_SUCCESS )
+    {
+        ConsolePrint(F("\n SUCCESS\n"));
+    }
+    else if ( rc == LORA_RC_DATA_TOO_LONG )
+    {
+      ConsolePrint(F("\n !!!DATA_TOO_LONG\n"));
+    }
+    else if ( rc == LORA_RC_NO_FREE_CH )
+    {
+      ConsolePrint(F("\n !!!No free CH\n"));
+    }
+    else if ( rc == LORA_RC_BUSY )
+    {
+      ConsolePrint(F("\n !!!Busy\n"));
+    }
+    else if ( rc ==LORA_RC_NOT_JOINED )
+    {
+      ConsolePrint(F("\n !!!Not Joined\n"));
+    }
+    else if ( rc == LORA_RC_ERROR )
+    {
+     ConsolePrint(F("\n !!!UNSUCCESS\n"));
+    }
 }
 
 //===============================
@@ -139,8 +166,8 @@ void task2(void)
 //===============================
 
 TASK_LIST = {
-        TASK(task1, 0, 10),
-        TASK(task2, 8, 10),
+        TASK(task1, 0, 1),
+        TASK(task2, 1, 2),
         END_OF_TASK_LIST
 };
 

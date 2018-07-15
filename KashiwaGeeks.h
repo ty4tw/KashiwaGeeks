@@ -11,7 +11,6 @@
 
 #include <Application.h>
 #include <Payload.h>
-#include <RAK811.h>
 #include <ADB922S.h>
 
 using namespace tomyApplication;

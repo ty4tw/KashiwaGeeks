@@ -24,15 +24,18 @@ void start()
     /*
      * Enable Interrupt 0 & 1  Uncomment the following two  lines.
      */
-    //pinMode(2, INPUT_PULLUP);
-    //pinMode(3, INPUT_PULLUP); // For ADB922S, CUT the pin3 of the Sheild.
+    //EnableInt0();
+    //EnableInt1();  // For ADB922S, CUT the pin3 of the Sheild.
+
+
+    ConsolePrint(F("\n**** GPS_Sample *****\n"));
 
     /*  setup Power save Devices */
     power_adc_disable();       // ADC converter
     power_spi_disable();       // SPI
 
     /*  setup ADB922S  */
-    if ( LoRa.begin(BPS_19200) == false )
+    if ( LoRa.begin(BPS_9600, DR2) == false )
     {
         while(true)
         {
@@ -43,17 +46,16 @@ void start()
         }
     }
 
-    /* set minimum DR. to expand the payload's size. */
-    //LoRa.setDr(DR3);  // DR0 to DR5
-
     /* setup the GPS */
     pinMode(8, INPUT);
     gpsSerial.begin(BPS_9600);
     GpsWakeup();
     while( !isGpsReady() ){ };
 
+
     /*  join LoRaWAN */
     LoRa.join();
+
 }
 //================================
 //          Power save functions

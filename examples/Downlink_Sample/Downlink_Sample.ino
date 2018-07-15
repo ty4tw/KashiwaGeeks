@@ -23,10 +23,10 @@ void start()
     /*
      * Enable Interrupt 0 & 1  Uncomment the following two  lines.
      */
-    //pinMode(2, INPUT_PULLUP);
-    //pinMode(3, INPUT_PULLUP); // For ADB922S, CUT the pin3 of the Sheild.
+    //EnableInt0();
+    //EnableInt1();  // For ADB922S, CUT the pin3 of the Sheild.
 
-    ConsolePrint(F("**** Downlink_Sample *****\n"));
+    ConsolePrint(F("\n**** Downlink_Sample *****\n"));
 
     /*  setup Power save Devices */
     //power_adc_disable();          // ADC converter
@@ -36,7 +36,7 @@ void start()
     //power_twi_disable();           // I2C
 
     /*  setup ADB922S  */
-    if ( LoRa.begin(BPS_19200) == false )
+    if ( LoRa.begin(BPS_9600, DR3) == false )
     {
         while(true)
         {
@@ -46,9 +46,6 @@ void start()
             delay(300);
         }
     }
-
-    /* set minimum DR. to expand the payload's size. */
-    LoRa.setDr(DR3);  // DR0 to DR5
 
     /*  join LoRaWAN */
     LoRa.join();
@@ -81,12 +78,12 @@ void wakeup(void)
 //================================
 void int0D2(void)
 {
-  ConsolePrint(F("\nINT0 割込み発生\n"));
+  ConsolePrint(F("\n!!! INT0\n"));
 }
 
 void int1D3(void)
 {
-  ConsolePrint(F("\nINT1 割込み発生\n"));
+  ConsolePrint(F("\n!!! INT1\n"));
 }
 
 
@@ -95,14 +92,14 @@ void int1D3(void)
 //================================
 void port14(void)
 {
-  ConsolePrint("%s\n", LoRa.getDownLinkData().c_str());
+  ConsolePrint("\n\nDownlink data was received.   Data=%s\n\n", LoRa.getDownLinkData().c_str());
 }
 
 void port15(void)
 {
     Payload* pl = LoRa.getDownLinkPayload();
     uint16_t dld = pl->get_uint16();
-    ConsolePrint(F("DL=%d\n"), dld);
+    ConsolePrint(F("\n\nDownlink data was received.   Data=%d\n\n"), dld);
 }
 
 PORT_LIST = { 
@@ -162,9 +159,8 @@ void task2(void)
 //===============================
 
 TASK_LIST = {
-        TASK(task1, 0, 15),
-        TASK(task2, 8, 15),
-        //TASK(task3),
+        TASK(task1, 0, 1),
+        TASK(task2, 1, 2),
         END_OF_TASK_LIST
 };
 

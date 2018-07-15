@@ -14,16 +14,13 @@
  *  Debug log control defines
  */
 
-//#define SHOW_LORA_TRANSACTION
+//#define TEST_ADR
 //#define FREE_MEMORY_CHECK
 
 
 /*
- *    Sleep mode define
+ *  Version
  */
-
-#define SLEEP_MODE   SLEEP_MODE_PWR_DOWN
-//#define SLEEP_MODE   SLEEP_MODE_STANDBY
-//#define SLEEP_MODE   SLEEP_MODE_PWR_SAVE
+#define  KGS_VERSION   F("\n_/_/_/ KashiwaGeeks 0.10.1 _/_/_/\r\n\n")
 
 #endif /* LIBRARIES_KASHIWAGEEKS_APPDEFINE_H_ */

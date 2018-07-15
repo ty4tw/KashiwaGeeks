@@ -30,6 +30,8 @@ void setupDevice(void);
 void sleep(void);
 void wakeup(void);
 void resetArduino(void);
+void EnableInt0(void);
+void EnableInt1(void);
 
 void DebugPrint(const __FlashStringHelper *format, ...);
 void ConsolePrint(const __FlashStringHelper *format, ...);
@@ -39,6 +41,7 @@ void ConsoleBegin(unsigned long baud);
 void ConsoleBegin(unsigned long baud, uint8_t rxpin, uint8_t txpin);
 void DisableConsole(void);
 void DisableDebug(void);
+void SetUTC(uint16_t ddmmyy, uint16_t hhmmss);
 
 namespace tomyApplication
 {
@@ -47,7 +50,20 @@ namespace tomyApplication
 
 #define LOG_BUF_LEN 128
 
+/*
+ *    Debug define
+ */
+
 //#define SHOW_TASK_LIST
+//#define LORA_DEBUG
+
+/*
+ *    Sleep mode define
+ */
+
+#define SLEEP_MODE   SLEEP_MODE_PWR_DOWN
+//#define SLEEP_MODE   SLEEP_MODE_STANDBY
+//#define SLEEP_MODE   SLEEP_MODE_PWR_SAVE
 
 /*======================================
  MACROs for the Appication

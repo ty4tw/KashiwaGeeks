@@ -31,6 +31,7 @@ using namespace tomyApplication;
 uint32_t theAlarmTime = 0;
 uint8_t theWDTCSR = WDT_VAL_8S;
 uint8_t theWdtSecs = 8;
+
 volatile uint32_t theTimeCount;
 volatile uint32_t theUTC = 0;
 volatile INT_stat_t theIntStat = INT_INIT;
@@ -144,28 +145,41 @@ void DelayMs(unsigned long ms)
     startWatchdog();
 }
 */
-/*
-void AdjustUTC(uint32_t sms, uint32_t ems)
+
+void SetUTC(uint16_t ddmmyy, uint16_t hhmmss)
 {
-    uint32_t sec = 0;
-    uint32_t ms = ems - sms;
-    if ( ems < sms )
+    uint16_t y = ddmmyy % 100;
+    uint16_t m = (ddmmyy / 100 ) % 100;
+
+    if ( m < 3 )
     {
-        ms = ems - sms + 0xffff;
+        m += 12;
+        y--;
     }
+    uint32_t days = 365 * ( y + y/4 - y/100 + y/400)  + (306 * (m + 1)) / 10 + ddmmyy % 10000 - 719591;     //  -428 - 719163
+    uint32_t newUTC = days * 86400 + hhmmss / 10000 * 3600 + ((hhmmss / 100) % 100) * 60 + hhmmss % 100;
 
-    theMs += ms;
-
-    if ( theMs > 1000 )
+    cli();
+    if( newUTC > theUTC )
     {
-        sec = theMs / 1000;
-        theSec += sec;
-        theMs = theMs % 1000;
+        theTimeCount += (newUTC - theUTC);
     }
-
-    //DebugPrint("%lu %lu %lu  %lu %lu.%lu\n", sms, ems, sec, ms, theSec, theMs);
+    else
+    {
+        uint32_t delUTC = theUTC - newUTC;
+        if ( delUTC > theTimeCount )
+        {
+            theTimeCount = 0;
+        }
+        else
+        {
+        theTimeCount -= delUTC;
+        }
+    }
+   theUTC = newUTC;
+    sei();
 }
-*/
+
 
 /*=====================================
  Interrupt Handler
@@ -276,6 +290,15 @@ uint8_t getPinMode(uint8_t pin)
   }
 }
 
+void EnableInt0(void)
+{
+    pinMode(2, INPUT_PULLUP);
+}
+
+void EnableInt1(void)
+{
+    pinMode(3, INPUT_PULLUP);
+}
 
 //
 //
@@ -360,7 +383,7 @@ Application::~Application(void)
 
 void Application::initialize(void)
 {
-    DebugPrint(F("\n\n_/_/_/ KashiwaGeeks 0.8.1 _/_/_/\r\n\n\n"));
+    DebugPrint(KGS_VERSION);
     if ( getPinMode(2) == INPUT_PULLUP)
     {
         _int0enable = true;

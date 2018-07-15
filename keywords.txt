@@ -5,27 +5,111 @@
 ########################################
 # Datatypes (KEYWORD1)
 ########################################
+  
+ADB922S	KEYWORD1    
+KGPS	KEYWORD1
 
-ADB922S KEYWORD1
+TASK_LIST	KEYWORD1
+PORT_LIST	KEYWORD1
+END_OF_TASK_LIST	KEYWORD1
+END_OF_PORT_LIST	KEYWORD1
+Payload	KEYWORD2
 ########################################
 # Methods and Functions (KEYWORD2)
 ########################################
-begin KEYWORD2
-connect KEYWORD2
-reconnect KEYWORD2
-sendData KEYWORD2
-sendBinary KEYWORD2
-sendDataConfirm KEYWORD2
-sendBinaryConfirm KEYWORD2
-getDownLinkData KEYWORD2
-sleep KEYWORD2
-wakeup KEYWORD2
-getHwModel KEYWORD2
-getVersion KEYWORD2
-getEUI KEYWORD2
-getMaxPayloadSize KEYWORD2
-setTxRetryCount KEYWORD2
+
+begin	KEYWORD2
+join	KEYWORD2
+isJoin	KEYWORD2
+sendData	KEYWORD2
+sendPayload	KEYWORD2
+sendDataConfirm	KEYWORD2
+sendPayloadConfirm	KEYWORD2
+getDownlinkPort	KEYWORD2
+getDownLinkData	KEYWORD2
+checkDownLink	KEYWORD2
+setADR	KEYWORD2
+setADRParams	KEYWORD2
+setLinkCheck	KEYWORD2
+setTxRetryCount	KEYWORD2
+setDr	KEYWORD2
+getHwModel	KEYWORD2
+getVersion	KEYWORD2
+getEUI	KEYWORD2
+getMaxPayloadSize	KEYWORD2
+getMarginsleep	KEYWORD2
+getNbGw	KEYWORD2
+wakeup	KEYWORD2
+sleep	KEYWORD2
+wakeup	KEYWORD2
+reset	KEYWORK2
+start	KEYWORD2
+int0D2	KEYWORD2
+int1D3	KEYWORD2
+
+set_bool	KEYWORD2
+set_int4	KEYWORD2
+set_int8	KEYWORD2
+set_int16	KEYWORD2
+set_int32	KEYWORD2
+set_float	KEYWORD2
+set_uint4	KEYWORD2
+set_uint8	KEYWORD2
+set_uint16	KEYWORD2
+set_uint24	KEYWORD2
+set_uint32	KEYWORD2
+set_string	KEYWORD2
+get_bool	KEYWORD2
+get_int4	KEYWORD2
+get_int8	KEYWORD2
+get_int16	KEYWORD2
+get_int32	KEYWORD2
+get_float	KEYWORD2
+get_uint4	KEYWORD2
+get_uint8	KEYWORD2
+get_uint16	KEYWORD2
+get_uint24	KEYWORD2
+get_uint32	KEYWORD2
+get_string	KEYWORD2
+getRowData	KEYWORD2
+getLen	KEYWORD2
+clear	KEYWORD2
+reacquire	KEYWORD2
+create	KEYWORD2
+
+isReady	KEYWORD2
+getLocation	KEYWORD2
+getTime	KEYWORD2
+getDate	KEYWORD2
+
+power_adc_disable	KEYWORD2
+power_spi_disable	KEYWORD2
+power_timer1_disable	KEYWORD2
+power_timer2_disable	KEYWORD2
+power_twi_disable	KEYWORD2
+
+ConsoleBegin	KEYWORD2
+ConsolePrint	KEYWORD2
+DebugPrint	KEYWORD2
+DisableConsole	KEYWORD2
+DisableDebug	KEYWORD2
+EnableInt0	KEYWORD2
+EnableInt1	KEYWORD2
+SetUTC	KEYWORD2
+
+TASK	KEYWORD2
+PORT	KEWWORD2
 ########################################
 # Constants (LITERAL1)
 ########################################
+BPS_9600		LITERAL1
+BPS_19200		LITERAL1
+BPS_57600		LITERAL1
+BPS_115200		LITERAL1
+DR2		LITERAL1
+DR3		LITERAL1
+DR4		LITERAL1
+DR5		LITERAL1
+
+KashiwaGeeks		LITERAL1
 

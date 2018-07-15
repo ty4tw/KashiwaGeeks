@@ -21,7 +21,9 @@ public:
     bool isReady(void);
     void sleep(void);
     void wakeup(void);
-    Payload* getPayload(void);
+    Payload* getLocation(void);
+    uint16_t getTime(void);
+    uint16_t getDate(void);
 private:
     TinyGPSPlus _gps;
     SoftwareSerial*  _serial;

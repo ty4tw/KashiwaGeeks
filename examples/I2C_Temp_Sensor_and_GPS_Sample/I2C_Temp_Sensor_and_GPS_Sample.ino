@@ -2,20 +2,13 @@
 #include <Wire.h>
 #include "KGPS.h"
 
-#define ECHO false
-#define ADB        //  comment out this line for RAK811
+#define ECHO true
 
-#ifdef ADB
 ADB922S LoRa;
-#define RAK_CONFIG
-#else
-RAK811 LoRa;
-#define RAK_CONFIG "dev_eui:xxxx&app_eui:xxxx&app_key:xxxx"
-#endif
 
 KGPS gps;
 uint8_t portGPS = 12;
-uint8_t portTemp = 13;
+uint8_t portTemp = 16;
 
 //================================
 //          Initialize Device Function
@@ -25,32 +18,29 @@ uint8_t portTemp = 13;
 #define BPS_57600     57600
 #define BPS_115200   115200
 
-#define CONSOLE_Rx_PIN    4
-#define CONSOLE_Tx_PIN    5
 
 void start()
 {
     /*  Setup console */
-#ifdef ADB
     ConsoleBegin(BPS_57600);
-#else
-    ConsoleBegin(BPS_19200, CONSOLE_Rx_PIN, CONSOLE_Tx_PIN);
-#endif
 
     //DisableDebug();
 
     /*
      * Enable Interrupt 0 & 1
      */
-    pinMode(2, INPUT_PULLUP);
-    //pinMode(3, INPUT_PULLUP);   // For ADB922S, CUT the pin3 of the Sheild.
+    EnableInt0();
+    //EnableInt1();  // For ADB922S, CUT the pin3 of the Sheild.
+
+
+    ConsolePrint(F("\n**** I2C_Temp_Sensor_and_GPS_Sample *****\n"));
 
     /*  setup Power save Devices */
     power_adc_disable();       // ADC converter
     power_spi_disable();       // SPI
 
     /*  setup the LoRaWAN device  */
-    if ( LoRa.begin(BPS_19200) == false )
+    if ( LoRa.begin(BPS_9600, DR3) == false )
     {
         while(true)
         {
@@ -60,18 +50,15 @@ void start()
             delay(300);
         }
     }
-    LoRa.setConfig(RAK_CONFIG);
-
-    /* set minimum DR. to expand the payload's size. */
-    //LoRa.setDrDRr3);  // DR0 to DR5
 
     /* setup the GPS */
-    gps.begin(9600, 8, 9);
+    gps.begin(BPS_9600, 8, 9);
     ConsolePrint(F("Initilizing GPS\n"));
     while( !gps.isReady() ){ };
 
     /* setup I2C */
     Wire.begin();
+
 
     /*  join LoRaWAN */
     LoRa.join();
@@ -90,7 +77,7 @@ void taskTemp(void)
 //    TASK( function, initial offset, interval by minute )
 //========================================
 TASK_LIST = {
-        TASK(taskTemp, 0, 10),
+        TASK(taskTemp, 0, 1),
         END_OF_TASK_LIST
 };
 
@@ -128,7 +115,7 @@ void sendLocation(void)
 {
     gps.wakeup();
     while( !gps.isReady() ){ };
-    Payload* pl = gps.getPayload();
+    Payload* pl = gps.getLocation();
     if (pl)
     {
         LoRa.sendPayload(portGPS, ECHO, pl);
