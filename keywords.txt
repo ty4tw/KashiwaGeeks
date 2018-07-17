@@ -42,7 +42,7 @@ getNbGw	KEYWORD2
 wakeup	KEYWORD2
 sleep	KEYWORD2
 wakeup	KEYWORD2
-reset	KEYWORK2
+reset	KEYWORD2
 start	KEYWORD2
 int0D2	KEYWORD2
 int1D3	KEYWORD2
@@ -98,7 +98,7 @@ EnableInt1	KEYWORD2
 SetUTC	KEYWORD2
 
 TASK	KEYWORD2
-PORT	KEWWORD2
+PORT	KEYWORD2
 ########################################
 # Constants (LITERAL1)
 ########################################
