@@ -45,7 +45,7 @@ void func2()
 //===============================
 TASK_LIST = {
   TASK(func1, 0, 1),
-  TASK(func2, 1 2),
+  TASK(func2, 1, 2),
   END_OF_TASK_LIST
 };
 
