@@ -27,76 +27,11 @@
 #ifndef ADB922S_H_
 #define ADB922S_H_
 #include <Application.h>
+#include <LoRaWANDef.h>
 #include <Payload.h>
 #include <SoftwareSerial.h>
 namespace tomyApplication
 {
-
-//
-//  LoRaWAN defines
-//
-#define LoRa_DEFAULT_PAYLOAD_SIZE      11
-
-#define LoRa_INIT_WAIT_TIME      1000
-#define LoRa_SERIAL_WAIT_TIME    2000
-#define LoRa_RECEIVE_DELAY2      5000
-#define JOIN__WAIT_TIME         30000
-
-#define LORA_RC_SUCCESS            0
-#define LORA_RC_DATA_TOO_LONG     -1
-#define LORA_RC_NOT_JOINED        -2
-#define LORA_RC_NO_FREE_CH   -3
-#define LORA_RC_BUSY    -4
-#define LORA_RC_ERROR             -5
-#define LoRa_Rx_PIN               11
-#define LoRa_Tx_PIN               12
-#define LoRa_WAKEUP_PIN            7
-
-#define ADR_ACK_LIMIT     5
-#define ADR_ACK_DELAY   2
-
-#ifdef LORA_DEBUG
-#define LoRaDebug(...)  DebugPrint( __VA_ARGS__)
-#define ECHOFLAG  true
-#else
-#define LoRaDebug(...)
-#define ECHOFLAG  false
-#endif
-
-#ifdef TEST_ADR
-#define ADRDebug(...)  DebugPrint( __VA_ARGS__)
-#else
-#define ADRDebug(...)
-#endif
-
-#define MAX_NO_FREE_CH_CNT  5
-#ifndef PORT_LIST
-#define PORT_LIST   PortList_t  thePortList[]
-#define PORT(...)         {__VA_ARGS__}
-#define END_OF_PORT_LIST  {0, 0}
-
-typedef enum
-{
-    DR0, DR1, DR2, DR3, DR4, DR5
-}LoRaDR;
-
-typedef enum
-{
-    CH0, CH1, CH2, CH3, CH4, CH5, CH6, CH7, CH8, CH9, CH10, CH11, CH12, CH13, CH14, CH15, CH16
-}CHID;
-
-typedef  enum {
-    joined, not_joined
-}JoineStatus;
-
-typedef struct PortList
-{
-    uint8_t port;
-    void (*callback)(void);
-} PortList_t;
-#endif
-
-#define LORA_TYPES
 
 class ADB922S
 {

@@ -40,6 +40,10 @@ extern PortList_t thePortList[];
 const char* loraTxUnconfirmCmd = "lorawan tx ucnf";
 const char* loraTxConfirmCmd = "lorawan tx cnf";
 
+#define LoRa_Rx_PIN               11
+#define LoRa_Tx_PIN               12
+#define LoRa_WAKEUP_PIN            7
+
 //
 //
 //     Class ADB922S

@@ -1,5 +1,5 @@
 /*
- * KGPS.h
+ * KGPS.h    The MIT license
  * 
  * COPYRIGHT(c) 2018  tomoaki  < tomoaki@tomy-tech.com >
  *

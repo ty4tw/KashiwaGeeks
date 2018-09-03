@@ -1,3 +1,10 @@
+/****************************************************************
+ *
+ *                The MIT License
+ *
+ *   Copyright (c) 2017-2018  tomoaki@tomy-tech.com
+ *
+ ***************************************************************/
 #include <KashiwaGeeks.h>
 
 #define ECHO true

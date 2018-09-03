@@ -1,5 +1,9 @@
 /****************************************************************
  *
+ *                The MIT License
+ *
+ *   Copyright (c) 2017-2018  tomoaki@tomy-tech.com
+ *
  *            I M P O R T A N T    N O T I C E
  *
  *    Uncomment the line17 of AppDefine.h in the library
